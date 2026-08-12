@@ -1,0 +1,141 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Company {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  joinToken   String   @unique
+  joinEnabled Boolean  @default(true)
+  employeeSeq Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  memberships Membership[]
+  profiles    EmployeeProfile[]
+  documents   DocumentRecord[]
+  leaveRequests LeaveRequest[]
+}
+
+model Membership {
+  id         String   @id @default(cuid())
+  authUserId String   @unique
+  companyId  String
+  email      String
+  name       String
+  role       String   @default("EMPLOYEE")
+  employeeId String
+  status     String   @default("active")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, employeeId])
+  @@unique([companyId, email])
+  @@index([companyId])
+}
+
+model EmployeeProfile {
+  id               String   @id @default(cuid())
+  companyId        String
+  employeeId       String
+  fullName         String
+  designation      String   @default("")
+  department       String   @default("")
+  manager          String   @default("")
+  location         String   @default("")
+  employmentType   String   @default("Full Time")
+  joiningDate      DateTime @default(now())
+  status           String   @default("Active")
+  personalEmail    String?
+  officialEmail    String?
+  mobile           String?
+  emergencyContact String?
+  currentAddress   String?
+  permanentAddress String?
+  city             String?
+  state            String?
+  country          String?
+  pincode          String?
+  aadhaar          String?
+  pan              String?
+  passport         String?
+  drivingLicense   String?
+  uan              String?
+  pfNumber         String?
+  esicNumber       String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, employeeId])
+  @@index([companyId])
+}
+
+model DocumentRecord {
+  id                 String    @id @default(cuid())
+  companyId          String
+  employeeId         String
+  name               String
+  category           String
+  uploadDate         DateTime  @default(now())
+  expiryDate         DateTime?
+  uploadedBy         String
+  verificationStatus String    @default("Uploaded")
+  fileType           String
+  storagePath        String
+  mimeType           String?
+  sizeInBytes        Int?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId, employeeId])
+}
+
+model Payslip {
+  id           String   @id @default(cuid())
+  companyId    String?
+  employeeId   String
+  employeeName String
+  period       String
+  fileName     String
+  storagePath  String
+  netPay       Decimal  @default(0)
+  status       String   @default("Published")
+  uploadedBy   String
+  uploadedAt   DateTime @default(now())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model LeaveRequest {
+  id             String   @id @default(cuid())
+  companyId      String
+  employeeId     String
+  employeeName   String   @default("")
+  leaveType      String
+  startDate      DateTime
+  endDate        DateTime
+  reason         String?
+  status         String   @default("Pending")
+  managerComment String?
+  reviewedBy     String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId, employeeId])
+  @@index([companyId, status])
+}

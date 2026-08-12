@@ -1,0 +1,18 @@
+.appraisal-embedded * {
+  box-sizing: border-box;
+}
+
+.appraisal-embedded {
+  font-family: 'Source Sans 3', 'DM Sans', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.appraisal-embedded ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.appraisal-embedded ::-webkit-scrollbar-thumb {
+  background: #90caf9;
+  border-radius: 4px;
+}

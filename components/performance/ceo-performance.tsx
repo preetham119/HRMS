@@ -1,0 +1,18 @@
+'use client';
+
+import { useState } from 'react';
+import { StageForm } from '@/components/performance/admin-performance';
+import { AppraisalStatusBadge } from '@/components/performance/appraisal-status-badge';
+import { getAppraisalBundle, getAppraisalState, listLeadershipQueue, saveLeadershipReview } from '@/lib/appraisal/store';
+import type { AppraisalActor, StageReview } from '@/lib/appraisal/types';
+
+type Form = Omit<StageReview, 'appraisalId' | 'reviewerId' | 'status' | 'submittedAt'>;
+const blank = (): Form => ({ comments: '', developmentPlan: '', strengths: '', improvements: '', salaryRevision: '', roleChange: '', training: '', highPotential: false, recommendPromotion: false, recommendIncrement: false, finalRating: null });
+
+export function CeoPerformance({ actor }: { actor: AppraisalActor }) {
+  const [selected, setSelected] = useState<string | null>(null); const [form, setForm] = useState<Form>(blank); const [version, setVersion] = useState(0); const [message, setMessage] = useState('');
+  const state = getAppraisalState(); const queue = listLeadershipQueue(state); const bundle = selected ? getAppraisalBundle(selected, state) : null; void version;
+  const pick = (id: string) => { const review = getAppraisalState().leadershipReviews.find((item) => item.appraisalId === id); setSelected(id); setForm(review ? { ...review } : blank()); };
+  const save = (submit: boolean) => { if (!bundle) return; try { saveLeadershipReview(actor, bundle.appraisal.id, { ...form, status: 'draft', submit }); setMessage(submit ? 'Appraisal completed.' : 'Leadership review draft saved.'); setVersion((v) => v + 1); } catch (error) { setMessage(error instanceof Error ? error.message : 'Unable to save review.'); } };
+  return <div className="grid gap-6 lg:grid-cols-[300px_1fr]"><aside className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm"><h2 className="font-semibold text-slate-900">Leadership queue ({queue.length})</h2><div className="mt-4 space-y-2">{queue.map((item) => <button key={item.id} onClick={() => pick(item.id)} className={`w-full rounded-xl border p-3 text-left ${selected === item.id ? 'border-slate-900 bg-slate-50' : 'border-slate-200'}`}><p className="text-sm font-semibold">{item.employeeName}</p><p className="text-xs text-slate-500">{item.department}</p></button>)}{!queue.length && <p className="py-5 text-sm text-slate-500">No reviews awaiting leadership.</p>}</div></aside><section className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">{!bundle ? <p className="text-sm text-slate-500">Select an appraisal for final review.</p> : <><div className="flex justify-between gap-3"><div><h2 className="text-xl font-semibold text-slate-900">{bundle.appraisal.employeeName}</h2><p className="text-sm text-slate-500">{bundle.appraisal.designation} · Admin rating: {bundle.adminReview?.finalRating ?? '—'}</p></div><AppraisalStatusBadge status={bundle.appraisal.status} /></div><div className="mt-5 rounded-xl bg-slate-50 p-4 text-sm text-slate-700"><p><span className="font-semibold">Self appraisal:</span> {bundle.appraisal.achievements || 'Not provided'}</p><p className="mt-2"><span className="font-semibold">Admin recommendation:</span> {bundle.adminReview?.comments || 'Not provided'}</p></div><StageForm form={form} setForm={setForm} /><div className="mt-5 flex gap-3"><button onClick={() => save(false)} className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold">Save draft</button><button onClick={() => save(true)} className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white">Complete appraisal</button></div>{message && <p className="mt-3 text-sm text-slate-600">{message}</p>}</>}</section></div>;
+}

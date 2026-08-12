@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 140" role="img" aria-labelledby="title">
+  <title id="title">HRMS Portal</title>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M32 78V41L73 25l41 16v37" stroke="#0f2742" stroke-width="12"/>
+    <path d="M12 91V65l20-7M134 91V65l-20-7" stroke="#0f2742" stroke-width="12"/>
+    <path d="M59 49h10v10H59zM78 49h10v10H78zM59 66h10v10H59zM78 66h10v10H78z" fill="#0f2742" stroke="none"/>
+    <circle cx="73" cy="82" r="18" fill="#1268db" stroke="none"/>
+    <circle cx="28" cy="91" r="13" fill="#1268db" stroke="none"/>
+    <circle cx="118" cy="91" r="13" fill="#1268db" stroke="none"/>
+    <path d="M45 127c0-19 12-30 28-30s28 11 28 30v3H45z" fill="#1268db" stroke="none"/>
+    <path d="M7 126c0-14 9-23 21-23 8 0 14 3 18 9-5 6-8 13-8 18H7zM139 126c0-14-9-23-21-23-8 0-14 3-18 9 5 6 8 13 8 18h31z" fill="#1268db" stroke="none"/>
+  </g>
+  <text x="170" y="94" fill="#0f2742" font-family="Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="58" font-weight="800" letter-spacing="-2">HRMS</text>
+  <text x="330" y="94" fill="#1268db" font-family="Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="52" font-weight="700" letter-spacing="-2">Portal</text>
+</svg>

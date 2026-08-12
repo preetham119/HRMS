@@ -1,0 +1,39 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+html.dark {
+  color-scheme: dark;
+}
+
+body {
+  @apply min-h-screen bg-slate-50 text-slate-900 antialiased transition-colors;
+  @apply dark:bg-slate-950 dark:text-slate-100;
+}
+
+* {
+  @apply box-border;
+}
+
+/* Without this, form controls fall back to the user agent's own colours, which
+   follow the OS colour-scheme and render as dark boxes on our light cards. */
+@layer base {
+  input,
+  textarea,
+  select {
+    @apply bg-transparent text-inherit;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    @apply text-slate-400;
+  }
+}
+
+::selection {
+  @apply bg-brand-500/20 text-brand-900 dark:bg-brand-400/30 dark:text-brand-100;
+}
