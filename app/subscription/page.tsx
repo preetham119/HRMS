@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { AlertCircle, Calendar, Check, ChevronRight, Clock, CreditCard, DollarSign, File, Loader2, Plus, X } from 'lucide-react';
 import Link from 'next/link';
@@ -28,7 +28,7 @@ const statusColors: Record<string, { bg: string; text: string; badge: string }> 
   EXPIRED: { bg: 'bg-red-50', text: 'text-red-700', badge: 'bg-red-100 text-red-800' },
 };
 
-export default function SubscriptionPage() {
+function SubscriptionContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [subscription, setSubscription] = useState<SubscriptionStatusResponse | null>(null);
@@ -424,5 +424,13 @@ export default function SubscriptionPage() {
         )}
       </div>
     </main>
+  );
+}
+
+export default function SubscriptionPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-slate-50 p-4 sm:p-6 lg:p-8 dark:bg-slate-950" />}>
+      <SubscriptionContent />
+    </Suspense>
   );
 }
