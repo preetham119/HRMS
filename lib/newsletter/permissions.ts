@@ -14,8 +14,11 @@ export type NewsletterPermission =
   | 'newsletter:publish'
   | 'newsletter:upload';
 
+const EMPLOYEE_NEWSLETTER: readonly NewsletterPermission[] = ['newsletter:view', 'newsletter:download'];
+
 const ROLE_PERMISSIONS: Record<AppRole, readonly NewsletterPermission[]> = {
-  EMPLOYEE: ['newsletter:view', 'newsletter:download'],
+  EMPLOYEE_PR: EMPLOYEE_NEWSLETTER,
+  EMPLOYEE_CONT: EMPLOYEE_NEWSLETTER,
   MANAGER: ['newsletter:view', 'newsletter:download'],
   FINANCE: ['newsletter:view', 'newsletter:download'],
   HR: [
@@ -49,7 +52,7 @@ const ROLE_PERMISSIONS: Record<AppRole, readonly NewsletterPermission[]> = {
 
 export function getNewsletterPermissions(role: AppRole | null | undefined): NewsletterPermission[] {
   if (!role) return [];
-  return [...(ROLE_PERMISSIONS[role] ?? ROLE_PERMISSIONS.EMPLOYEE)];
+  return [...(ROLE_PERMISSIONS[role] ?? ROLE_PERMISSIONS.EMPLOYEE_PR)];
 }
 
 export function hasNewsletterPermission(

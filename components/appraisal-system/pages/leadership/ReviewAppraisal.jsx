@@ -9,7 +9,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-toastify';
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell,
 } from 'recharts';
 import { appraisalApi } from '../../services';
 import {
@@ -18,15 +18,28 @@ import {
 import { StarScore } from '../../components/common/StarRating';
 import { averageRating, ratingLabel } from '../../utils/helpers';
 
+const STAGE_CHIP_COLORS = {
+  self: { done: '#1976D2', soft: 'rgba(25, 118, 210, 0.12)' },
+  manager: { done: '#43A047', soft: 'rgba(67, 160, 71, 0.12)' },
+  admin: { done: '#FB8C00', soft: 'rgba(251, 140, 0, 0.14)' },
+  leadership: { done: '#00897B', soft: 'rgba(0, 137, 123, 0.12)' },
+};
+
+const SUMMARY_BAR_COLORS = {
+  Employee: '#1976D2',
+  Manager: '#43A047',
+  Admin: '#FB8C00',
+};
+
 function RatingComparisonChart({ chartData, summaryData }) {
   return (
     <Grid container spacing={2.5}>
       <Grid item xs={12} md={7}>
         <Card>
           <CardContent>
-            <Typography variant="h6" fontWeight={700} mb={1}>Employee vs Manager Competency Ratings</Typography>
+            <Typography variant="h6" fontWeight={700} mb={1}>Employee vs Manager vs Admin Competency Ratings</Typography>
             <Typography variant="caption" color="text.secondary" display="block" mb={2}>
-              Side-by-side bar graph of self evaluation and manager review scores
+              Side-by-side bar graph of self evaluation, manager review, and admin review scores
             </Typography>
             {chartData?.length ? (
               <ResponsiveContainer width="100%" height={280}>
@@ -38,6 +51,7 @@ function RatingComparisonChart({ chartData, summaryData }) {
                   <Legend />
                   <Bar dataKey="Employee" fill="#1976D2" radius={[4, 4, 0, 0]} />
                   <Bar dataKey="Manager" fill="#43A047" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="Admin" fill="#FB8C00" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             ) : (
@@ -51,7 +65,7 @@ function RatingComparisonChart({ chartData, summaryData }) {
           <CardContent>
             <Typography variant="h6" fontWeight={700} mb={1}>Overall Rating Comparison</Typography>
             <Typography variant="caption" color="text.secondary" display="block" mb={2}>
-              Aggregate employee self rating vs manager overall rating
+              Employee, Manager, and Admin overall ratings
             </Typography>
             <ResponsiveContainer width="100%" height={240}>
               <BarChart data={summaryData} layout="vertical" margin={{ left: 20 }}>
@@ -59,7 +73,15 @@ function RatingComparisonChart({ chartData, summaryData }) {
                 <XAxis type="number" domain={[0, 5]} />
                 <YAxis type="category" dataKey="name" width={90} tick={{ fontSize: 12 }} />
                 <Tooltip />
-                <Bar dataKey="score" fill="#1976D2" radius={[0, 6, 6, 0]} name="Rating" />
+                <Legend />
+                <Bar dataKey="score" radius={[0, 6, 6, 0]} name="Rating">
+                  {(summaryData || []).map((entry) => (
+                    <Cell
+                      key={`cell-${entry.name}`}
+                      fill={SUMMARY_BAR_COLORS[entry.name] || '#1976D2'}
+                    />
+                  ))}
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -144,15 +166,18 @@ export default function LeadershipReviewAppraisal() {
     if (!data) return [];
     const comps = data.competencies || [];
     const ratings = data.ratings || [];
+    const adminFinal = Number(data.adminReview?.final_rating ?? data.hrReview?.final_rating) || 0;
     return comps.slice(0, 8).map((c) => {
       const emp = ratings.find((r) => r.rating_type === 'competency' && r.rated_by === 'employee' && String(r.reference_id) === String(c.id));
       const mgr = ratings.find((r) => r.rating_type === 'competency' && r.rated_by === 'manager' && String(r.reference_id) === String(c.id));
+      const adm = ratings.find((r) => r.rating_type === 'competency' && r.rated_by === 'admin' && String(r.reference_id) === String(c.id));
       return {
         name: c.name.length > 14 ? `${c.name.slice(0, 14)}…` : c.name,
         Employee: emp ? Number(emp.score) : 0,
         Manager: mgr ? Number(mgr.score) : 0,
+        Admin: adm ? Number(adm.score) : adminFinal,
       };
-    }).filter((x) => x.Employee || x.Manager);
+    }).filter((x) => x.Employee || x.Manager || x.Admin);
   }, [data]);
 
   if (isLoading) return <LoadingSkeleton rows={10} />;
@@ -220,17 +245,25 @@ export default function LeadershipReviewAppraisal() {
             color={progress >= 100 ? 'success' : 'primary'}
           />
           <Stack direction="row" spacing={1.5} flexWrap="wrap" useFlexGap>
-            {stages.map((s) => (
-              <Chip
-                key={s.id}
-                size="small"
-                icon={s.done ? <CheckCircleIcon /> : <RadioButtonUncheckedIcon />}
-                label={s.label}
-                color={s.done ? 'success' : 'default'}
-                variant={s.done ? 'filled' : 'outlined'}
-                sx={{ fontWeight: 600 }}
-              />
-            ))}
+            {stages.map((s) => {
+              const palette = STAGE_CHIP_COLORS[s.id] || STAGE_CHIP_COLORS.self;
+              return (
+                <Chip
+                  key={s.id}
+                  size="small"
+                  icon={s.done ? <CheckCircleIcon /> : <RadioButtonUncheckedIcon />}
+                  label={s.label}
+                  variant={s.done ? 'filled' : 'outlined'}
+                  sx={{
+                    fontWeight: 600,
+                    bgcolor: s.done ? palette.done : 'transparent',
+                    color: s.done ? '#fff' : 'text.secondary',
+                    borderColor: palette.done,
+                    '& .MuiChip-icon': { color: s.done ? '#fff' : palette.done },
+                  }}
+                />
+              );
+            })}
           </Stack>
         </CardContent>
       </Card>
@@ -243,7 +276,7 @@ export default function LeadershipReviewAppraisal() {
       <Tabs value={tab} onChange={(_, v) => setTab(v)} variant="scrollable" scrollButtons="auto" sx={{ mb: 1 }}>
         <Tab label="Employee Self Review" />
         <Tab label="Manager Review" />
-        <Tab label="HR Review" />
+        <Tab label="Admin Review" />
         <Tab label="Recommendations" />
         <Tab label="Documents" />
       </Tabs>

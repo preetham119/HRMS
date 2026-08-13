@@ -1,5 +1,11 @@
 import { NextResponse } from 'next/server';
 import { createJoinToken, joinUrlForToken } from '@/lib/company';
+import { isMockAuthEnabled } from '@/lib/auth/mock-mode';
+import {
+  getMockJoinLink,
+  regenerateMockJoinToken,
+  setMockJoinEnabled,
+} from '@/lib/auth/mock-company-store';
 import { AuthError, isHrOrAdmin, requireMembership, requirePrisma } from '@/lib/auth/session';
 
 export async function GET() {
@@ -7,6 +13,10 @@ export async function GET() {
     const membership = await requireMembership();
     if (!isHrOrAdmin(membership.role)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
+    if (isMockAuthEnabled()) {
+      return NextResponse.json(getMockJoinLink());
     }
 
     const db = requirePrisma();
@@ -33,6 +43,17 @@ export async function PATCH(request: Request) {
     }
 
     const body = (await request.json()) as { action?: string; joinEnabled?: boolean };
+
+    if (isMockAuthEnabled()) {
+      if (body.action === 'regenerate') {
+        return NextResponse.json(regenerateMockJoinToken());
+      }
+      if (typeof body.joinEnabled === 'boolean') {
+        return NextResponse.json(setMockJoinEnabled(body.joinEnabled));
+      }
+      return NextResponse.json({ error: 'Invalid action.' }, { status: 400 });
+    }
+
     const db = requirePrisma();
 
     if (body.action === 'regenerate') {

@@ -1,4 +1,5 @@
 import type { AppRole } from '@/lib/auth';
+import { isEmployeeRole } from '@/lib/auth';
 import type {
   AuditLogEntry,
   ExitActor,
@@ -467,7 +468,7 @@ export function completeExitInterview(
   if (!['Exit Interview Pending', 'Approved'].includes(exitCase.status)) {
     throw new Error('Exit Interview is not available for this case.');
   }
-  if (actor.role === 'EMPLOYEE' && exitCase.employeeId !== actor.employeeId) {
+  if (isEmployeeRole(actor.role) && exitCase.employeeId !== actor.employeeId) {
     throw new Error('You can only complete your own exit interview.');
   }
 
@@ -498,7 +499,7 @@ export function completeExitInterview(
     createAudit(actor, 'FULL_AND_FINAL_ENABLED', 'Full & Final settlement stage enabled automatically.'),
   );
   pushNotification({
-    userId: 'FIN001',
+    userId: 'EMP006',
     role: 'FINANCE',
     title: 'Full & Final pending',
     message: `Full & Final settlement is ready for ${exitCase.employeeName}.`,

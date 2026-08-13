@@ -1,9 +1,9 @@
 'use client';
 
-import { FC } from 'react';
+import { FC, type ReactNode } from 'react';
+import { BadgeCheck, Briefcase, Building2, Mail, MapPin, UserRound } from 'lucide-react';
 import Greeting from './Greeting';
 import ProfileAvatar from './ProfileAvatar';
-import EmployeeStatus from './EmployeeStatus';
 import InfoPills from './InfoPills';
 import QuickActions from './QuickActions';
 import SkylineIllustration from './SkylineIllustration';
@@ -13,68 +13,133 @@ interface HeroProps {
   name?: string;
   designation?: string;
   department?: string;
+  manager?: string;
+  officialEmail?: string;
+  status?: string;
   location?: string;
   photoUrl?: string | null;
   lastLogin?: string | null;
 }
 
+function InfoField({
+  label,
+  value,
+  icon,
+  iconClassName,
+}: {
+  label: string;
+  value?: string;
+  icon?: ReactNode;
+  iconClassName?: string;
+}) {
+  return (
+    <div className="flex items-start gap-2">
+      {icon ? (
+        <span
+          className={`mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full shadow-sm ${iconClassName ?? 'bg-white/20 text-white'}`}
+        >
+          {icon}
+        </span>
+      ) : null}
+      <div className="whitespace-nowrap">
+        <p className="text-[11px] font-medium uppercase tracking-wide text-white/70">{label}</p>
+        <p className="mt-0.5 text-sm font-semibold leading-snug text-white">
+          {value?.trim() ? value : '—'}
+        </p>
+      </div>
+    </div>
+  );
+}
+
 const HeroDashboard: FC<HeroProps> = ({
-  employeeId = 'EMP00125',
-  name = 'Raj',
-  location = 'Hyderabad, India',
+  employeeId = '',
+  name = '',
+  designation = '',
+  department = '',
+  manager = '',
+  officialEmail = '',
+  status = 'Active',
+  location = '',
   photoUrl = null,
   lastLogin,
 }) => {
+  const isActive = (status || 'Active').toLowerCase() === 'active';
+
   return (
     <section className="relative overflow-hidden rounded-[24px] bg-gradient-to-r from-[#1D4ED8] via-[#2563EB] to-[#60A5FA] text-white shadow-lg">
-      {/* glossy overlays + decorative circles */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute -right-16 top-6 w-[420px] h-[380px] bg-white/6 rounded-full blur-3xl mix-blend-overlay" />
-        <div className="absolute -right-6 bottom-0 w-[360px] h-[260px] bg-white/4 rounded-full blur-2xl mix-blend-overlay" />
-        <div className="absolute right-8 top-8 w-40 h-40 rounded-full bg-white/6" />
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute -right-16 top-6 h-[380px] w-[420px] rounded-full bg-white/10 blur-3xl" />
+        <div className="absolute -right-6 bottom-0 h-[260px] w-[360px] rounded-full bg-white/5 blur-2xl" />
       </div>
 
-      {/* skyline */}
       <SkylineIllustration />
 
-      <div className="relative z-10 max-w-7xl mx-auto px-6 py-6 lg:py-8" style={{ height: 280 }}>
-        <div className="flex w-full h-full items-start gap-6">
-          {/* left profile */}
-          <div className="flex-shrink-0 flex items-start">
-            <div className="flex flex-col items-start">
-              <ProfileAvatar name={name} photoUrl={photoUrl} />
-              <div className="mt-3 flex items-center gap-2 text-sm text-white/90">
-                <span className="inline-flex items-center justify-center rounded-full bg-white/10 w-7 h-7">
-                  <svg className="w-3 h-3 text-white" viewBox="0 0 24 24" fill="none"><path d="M12 2C8.1 2 5 5.1 5 9c0 5.2 7 13 7 13s7-7.8 7-13c0-3.9-3.1-7-7-7z" fill="currentColor"/></svg>
-                </span>
-                <span>{location}</span>
-              </div>
+      <div className="relative z-10 flex flex-col gap-5 px-5 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-7">
+        {/* Top row: avatar + greeting + employee info */}
+        <div className="grid grid-cols-1 items-start gap-5 xl:grid-cols-[auto_minmax(0,1fr)_minmax(340px,1fr)] xl:gap-6">
+          <div className="flex flex-col items-center gap-3 xl:items-start">
+            <ProfileAvatar name={name} photoUrl={photoUrl} />
+            <div className="flex max-w-[11rem] items-center justify-center gap-2 text-sm text-white/90 xl:justify-start">
+              <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/15">
+                <MapPin className="h-3.5 w-3.5" />
+              </span>
+              <span className="break-words">{location || '—'}</span>
             </div>
           </div>
 
-          {/* center content */}
-          <div className="flex-1 flex flex-col justify-start">
-            <div>
-              <Greeting name={name} />
-            </div>
-
-            <div className="mt-4">
+          <div className="min-w-0 text-center xl:pt-1 xl:text-left">
+            <Greeting name={name} />
+            <div className="mt-4 flex justify-center xl:justify-start">
               <InfoPills lastLogin={lastLogin} />
             </div>
           </div>
 
-          {/* right floating status card */}
-          <div className="flex-shrink-0 flex items-start">
-            <div className="relative">
-              <div className="absolute -right-4 -top-6 rounded-xl bg-white/18 backdrop-blur-md border border-white/20 p-4 w-48">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-xs text-white/90">Employee ID</div>
-                    <div className="mt-1 font-semibold text-white">{employeeId}</div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="inline-block h-3 w-3 rounded-full bg-[#22C55E]" />
-                    <div className="text-sm text-white/90">Active</div>
+          <div className="w-fit max-w-full justify-self-start">
+            <div className="rounded-2xl border border-white/25 bg-white/15 px-3.5 py-3 backdrop-blur-md sm:px-4">
+              <div className="grid grid-cols-1 gap-x-3 gap-y-3 sm:grid-cols-[max-content_max-content] sm:items-start">
+                <InfoField
+                  label="Employee ID"
+                  value={employeeId}
+                  icon={<BadgeCheck className="h-3.5 w-3.5" />}
+                  iconClassName="bg-sky-400 text-white"
+                />
+                <InfoField
+                  label="Official Email"
+                  value={officialEmail}
+                  icon={<Mail className="h-3.5 w-3.5" />}
+                  iconClassName="bg-rose-400 text-white"
+                />
+                <InfoField
+                  label="Designation"
+                  value={designation}
+                  icon={<Briefcase className="h-3.5 w-3.5" />}
+                  iconClassName="bg-amber-400 text-white"
+                />
+                <InfoField
+                  label="Department"
+                  value={department}
+                  icon={<Building2 className="h-3.5 w-3.5" />}
+                  iconClassName="bg-emerald-400 text-white"
+                />
+                <InfoField
+                  label="Manager"
+                  value={manager}
+                  icon={<UserRound className="h-3.5 w-3.5" />}
+                  iconClassName="bg-violet-400 text-white"
+                />
+                <div className="flex items-start gap-2">
+                  <span
+                    className={`mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full shadow-sm ${
+                      isActive ? 'bg-emerald-400' : 'bg-amber-400'
+                    }`}
+                  >
+                    <span className="inline-block h-2.5 w-2.5 rounded-full bg-white" />
+                  </span>
+                  <div className="whitespace-nowrap">
+                    <p className="text-[11px] font-medium uppercase tracking-wide text-white/70">Status</p>
+                    <p className="mt-0.5 text-sm font-semibold leading-snug text-white">
+                      {status?.trim() || '—'}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -82,10 +147,8 @@ const HeroDashboard: FC<HeroProps> = ({
           </div>
         </div>
 
-        {/* bottom actions */}
-        <div className="absolute left-6 right-6 bottom-5 z-20">
-          <QuickActions />
-        </div>
+        {/* Bottom actions — full width, equal columns */}
+        <QuickActions />
       </div>
     </section>
   );

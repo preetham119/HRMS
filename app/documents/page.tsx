@@ -156,14 +156,6 @@ export default function DocumentsPage() {
 
   const previewUrlRef = useRef<string | null>(null);
 
-  const handleDeleteDocument = useCallback((documentToDelete: DocumentItem) => {
-    setDocumentsState((current) => current.filter((item) => item.id !== documentToDelete.id));
-    if (selectedDocument?.id === documentToDelete.id) {
-      setSelectedDocument(null);
-      setPreviewUrl(null);
-    }
-  }, [selectedDocument]);
-
   const handlePreviewDocument = useCallback((documentItem: DocumentItem) => {
     const url = documentItem.downloadUrl ?? (documentItem.file ? URL.createObjectURL(documentItem.file) : null);
 
@@ -282,7 +274,6 @@ export default function DocumentsPage() {
                   onToggle={() => toggleCategory(category)}
                   onPreview={handlePreviewDocument}
                   onDownload={handleDownloadDocument}
-                  onDelete={handleDeleteDocument}
                 />
               ))}
             </div>
@@ -344,13 +335,6 @@ export default function DocumentsPage() {
                     </div>
                     <div className="flex gap-2">
                       <button className="rounded-2xl bg-white px-3 py-2 text-sm text-slate-600">Replace</button>
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteDocument(document)}
-                        className="rounded-2xl bg-white px-3 py-2 text-sm text-slate-600"
-                      >
-                        Delete
-                      </button>
                     </div>
                   </div>
                 </div>

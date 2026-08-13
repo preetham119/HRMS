@@ -23,9 +23,9 @@ function RatingComparisonChart({ chartData, summaryData }) {
       <Grid item xs={12} md={7}>
         <Card>
           <CardContent>
-            <Typography variant="h6" fontWeight={700} mb={1}>Employee vs Manager Competency Ratings</Typography>
+            <Typography variant="h6" fontWeight={700} mb={1}>Employee vs Manager vs Admin Competency Ratings</Typography>
             <Typography variant="caption" color="text.secondary" display="block" mb={2}>
-              Side-by-side bar graph of self evaluation and manager review scores
+              Side-by-side bar graph of self evaluation, manager review, and admin review scores
             </Typography>
             {chartData?.length ? (
               <ResponsiveContainer width="100%" height={280}>
@@ -35,8 +35,9 @@ function RatingComparisonChart({ chartData, summaryData }) {
                   <YAxis domain={[0, 5]} />
                   <Tooltip />
                   <Legend />
-                  <Bar dataKey="Employee" fill="#42A5F5" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="Employee" fill="#1976D2" radius={[4, 4, 0, 0]} />
                   <Bar dataKey="Manager" fill="#43A047" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="Admin" fill="#FB8C00" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             ) : (
@@ -145,16 +146,19 @@ export default function AdminReviewAppraisal() {
     if (!data) return [];
     const comps = data.competencies || [];
     const ratings = data.ratings || [];
+    const adminFinal = Number(data.adminReview?.final_rating) || Number(form.final_rating) || 0;
     return comps.slice(0, 8).map((c) => {
       const emp = ratings.find((r) => r.rating_type === 'competency' && r.rated_by === 'employee' && String(r.reference_id) === String(c.id));
       const mgr = ratings.find((r) => r.rating_type === 'competency' && r.rated_by === 'manager' && String(r.reference_id) === String(c.id));
+      const adm = ratings.find((r) => r.rating_type === 'competency' && r.rated_by === 'admin' && String(r.reference_id) === String(c.id));
       return {
         name: c.name.length > 14 ? `${c.name.slice(0, 14)}…` : c.name,
         Employee: emp ? Number(emp.score) : 0,
         Manager: mgr ? Number(mgr.score) : 0,
+        Admin: adm ? Number(adm.score) : adminFinal,
       };
-    }).filter((x) => x.Employee || x.Manager);
-  }, [data]);
+    }).filter((x) => x.Employee || x.Manager || x.Admin);
+  }, [data, form.final_rating]);
 
   if (isLoading) return <LoadingSkeleton rows={10} />;
   if (!data?.appraisal) {

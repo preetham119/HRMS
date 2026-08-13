@@ -8,7 +8,10 @@ export interface EmergencyContact {
   address: string;
 }
 
+export type PaymentMethod = 'cheque' | 'bank';
+
 export interface BankDetails {
+  paymentMethod?: PaymentMethod;
   accountHolderName?: string;
   bankName?: string;
   branch?: string;
@@ -89,7 +92,7 @@ export type ProfileUpdatePayload = Partial<EmployeeProfile> & {
 const API_ROUTE = '/api/employee/profile';
 
 export async function fetchEmployeeProfile(): Promise<EmployeeProfile> {
-  const response = await fetch(API_ROUTE, { cache: 'no-store' });
+  const response = await fetch(API_ROUTE, { cache: 'no-store', credentials: 'include' });
   if (!response.ok) {
     throw new Error('Failed to load profile data.');
   }
@@ -100,6 +103,7 @@ export async function updateEmployeeProfile(profile: ProfileUpdatePayload): Prom
   const response = await fetch(API_ROUTE, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
     body: JSON.stringify(profile),
   });
 

@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
+import { isMockAuthEnabled } from '@/lib/auth/mock-mode';
+import { listMockMembers, updateMockMemberRole } from '@/lib/auth/mock-company-store';
 import { AuthError, isHrOrAdmin, requireMembership, requirePrisma } from '@/lib/auth/session';
 
 export async function GET() {
@@ -7,6 +9,10 @@ export async function GET() {
     const membership = await requireMembership();
     if (!isHrOrAdmin(membership.role)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
+    if (isMockAuthEnabled()) {
+      return NextResponse.json(listMockMembers());
     }
 
     const db = requirePrisma();
@@ -35,7 +41,7 @@ export async function GET() {
 
 const patchSchema = z.object({
   membershipId: z.string().min(1),
-  role: z.enum(['EMPLOYEE', 'MANAGER', 'HR', 'FINANCE', 'ADMIN', 'CEO']),
+  role: z.enum(['EMPLOYEE_PR', 'EMPLOYEE_CONT', 'MANAGER', 'HR', 'FINANCE', 'ADMIN', 'CEO']),
 });
 
 export async function PATCH(request: Request) {
@@ -48,6 +54,21 @@ export async function PATCH(request: Request) {
     const parsed = patchSchema.safeParse(await request.json());
     if (!parsed.success) {
       return NextResponse.json({ error: 'Invalid role update.' }, { status: 400 });
+    }
+
+    if (isMockAuthEnabled()) {
+      try {
+        const updated = updateMockMemberRole(parsed.data.membershipId, parsed.data.role);
+        if (!updated) {
+          return NextResponse.json({ error: 'Member not found.' }, { status: 404 });
+        }
+        return NextResponse.json(updated);
+      } catch (error) {
+        return NextResponse.json(
+          { error: error instanceof Error ? error.message : 'Failed to update member.' },
+          { status: 400 },
+        );
+      }
     }
 
     const db = requirePrisma();

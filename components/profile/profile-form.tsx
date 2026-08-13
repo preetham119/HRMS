@@ -75,17 +75,38 @@ const profileSchema = z.object({
     })
   ).default([]),
   bankDetails: z.object({
-    accountHolderName: z.string().trim().min(1, 'Account holder name is required'),
-    bankName: z.string().trim().min(1, 'Bank name is required'),
-    branch: z.string().trim().min(1, 'Branch is required'),
-    accountNumber: z.string().trim().min(4, 'Enter a valid account number'),
-    confirmAccountNumber: z.string().trim().min(4, 'Enter a valid account number'),
-    ifscCode: z.string().trim().regex(/^[A-Z]{4}0[A-Z0-9]{6}$/, 'Enter a valid IFSC code').optional().or(z.literal('')),
+    paymentMethod: z.enum(['cheque', 'bank']).default('cheque'),
+    accountHolderName: z.string().trim().optional().or(z.literal('')),
+    bankName: z.string().trim().optional().or(z.literal('')),
+    branch: z.string().trim().optional().or(z.literal('')),
+    accountNumber: z.string().trim().optional().or(z.literal('')),
+    confirmAccountNumber: z.string().trim().optional().or(z.literal('')),
+    ifscCode: z.string().trim().optional().or(z.literal('')),
     upiId: z.string().trim().optional().or(z.literal('')),
     cancelledChequeUrl: z.string().optional().or(z.literal('')),
   }).superRefine((data, ctx) => {
+    if (data.paymentMethod !== 'bank') return;
+
+    if (!data.accountHolderName?.trim()) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Account holder name is required', path: ['accountHolderName'] });
+    }
+    if (!data.bankName?.trim()) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Bank name is required', path: ['bankName'] });
+    }
+    if (!data.branch?.trim()) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Branch is required', path: ['branch'] });
+    }
+    if (!data.accountNumber || data.accountNumber.trim().length < 4) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Enter a valid account number', path: ['accountNumber'] });
+    }
+    if (!data.confirmAccountNumber || data.confirmAccountNumber.trim().length < 4) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Enter a valid account number', path: ['confirmAccountNumber'] });
+    }
     if (data.accountNumber && data.confirmAccountNumber && data.accountNumber !== data.confirmAccountNumber) {
       ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Account numbers do not match', path: ['confirmAccountNumber'] });
+    }
+    if (data.ifscCode && data.ifscCode.trim() && !/^[A-Z]{4}0[A-Z0-9]{6}$/.test(data.ifscCode.trim())) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Enter a valid IFSC code', path: ['ifscCode'] });
     }
   }),
   socialProfiles: z.object({
@@ -123,11 +144,11 @@ export function ProfileForm({ data, onSave }: ProfileFormProps) {
   const [showConfirmAccountNumber, setShowConfirmAccountNumber] = useState(false);
   const [dateOfBirthLocked, setDateOfBirthLocked] = useState(Boolean(data.dateOfBirth));
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
-    personal: true,
-    contact: true,
-    emergency: true,
-    bank: true,
-    social: true,
+    personal: false,
+    contact: false,
+    emergency: false,
+    payments: false,
+    social: false,
   });
 
   const defaultValues = useMemo<ProfileFormValues>(() => ({
@@ -161,6 +182,7 @@ export function ProfileForm({ data, onSave }: ProfileFormProps) {
     sameAsCurrentAddress: data.sameAsCurrentAddress ?? true,
     emergencyContacts: data.emergencyContacts?.length ? data.emergencyContacts : [{ id: crypto.randomUUID(), contactName: '', relationship: '', mobile: '', alternateNumber: '', email: '', address: '' as string }],
     bankDetails: {
+      paymentMethod: data.bankDetails?.paymentMethod ?? 'cheque',
       accountHolderName: data.bankDetails?.accountHolderName ?? '',
       bankName: data.bankDetails?.bankName ?? '',
       branch: data.bankDetails?.branch ?? '',
@@ -197,6 +219,7 @@ export function ProfileForm({ data, onSave }: ProfileFormProps) {
   });
 
   const sameAsCurrentAddress = watch('sameAsCurrentAddress');
+  const paymentMethod = watch('bankDetails.paymentMethod');
   const currentAddressValues = watch(['currentAddressLine1', 'currentAddressLine2', 'currentCity', 'currentState', 'currentCountry', 'currentPincode']);
 
   useEffect(() => {
@@ -356,7 +379,7 @@ export function ProfileForm({ data, onSave }: ProfileFormProps) {
         <div>
           <p className="text-sm font-semibold uppercase tracking-[0.32em] text-brand-600">My Profile</p>
           <h1 className="mt-2 text-3xl font-semibold text-slate-900">Profile details</h1>
-          <p className="mt-2 text-sm text-slate-500">Keep personal, address, emergency, banking, and social information aligned and up to date.</p>
+          <p className="mt-2 text-sm text-slate-500">Keep personal, address, emergency, payments, and social information aligned and up to date.</p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
           {isEditable ? (
@@ -688,7 +711,7 @@ export function ProfileForm({ data, onSave }: ProfileFormProps) {
           <section className="rounded-[24px] border border-slate-200 bg-slate-50 p-5">
             <button
               type="button"
-              onClick={() => toggleSection('bank')}
+              onClick={() => toggleSection('payments')}
               className="mb-4 flex w-full items-center justify-between gap-3 text-left"
             >
               <div className="flex items-center gap-3">
@@ -696,69 +719,105 @@ export function ProfileForm({ data, onSave }: ProfileFormProps) {
                   <CreditCard className="h-5 w-5" aria-hidden="true" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-semibold text-slate-900">4. Bank Details</h2>
-                  <p className="text-sm text-slate-500">Secure payment and salary disbursement information.</p>
+                  <h2 className="text-lg font-semibold text-slate-900">4. Payments</h2>
+                  <p className="text-sm text-slate-500">Choose how salary and reimbursements should be paid.</p>
                 </div>
               </div>
-              {expandedSections.bank ? <ChevronUp className="h-5 w-5 text-slate-500" aria-hidden="true" /> : <ChevronDown className="h-5 w-5 text-slate-500" aria-hidden="true" />}
+              {expandedSections.payments ? <ChevronUp className="h-5 w-5 text-slate-500" aria-hidden="true" /> : <ChevronDown className="h-5 w-5 text-slate-500" aria-hidden="true" />}
             </button>
-            {expandedSections.bank ? (
-              <div className="grid gap-4 md:grid-cols-2">
-              <label className="space-y-2">
-                <div className="flex items-center gap-1 text-sm font-medium text-slate-700">Account holder name <span className="text-rose-600">*</span></div>
-                <input {...register('bankDetails.accountHolderName')} readOnly={!isEditable} className={inputClassName(Boolean(errors.bankDetails?.accountHolderName), !isEditable)} aria-label="Account holder name" />
-                {errors.bankDetails?.accountHolderName ? <p className="text-sm text-rose-600">{errors.bankDetails.accountHolderName.message}</p> : null}
-              </label>
-              <label className="space-y-2">
-                <div className="flex items-center gap-1 text-sm font-medium text-slate-700">Bank name <span className="text-rose-600">*</span></div>
-                <input {...register('bankDetails.bankName')} list="bank-name-options" readOnly={!isEditable} className={inputClassName(Boolean(errors.bankDetails?.bankName), !isEditable)} aria-label="Bank name" />
-                <datalist id="bank-name-options">
-                  {bankOptions.map((bank) => <option key={bank} value={bank} />)}
-                </datalist>
-                {errors.bankDetails?.bankName ? <p className="text-sm text-rose-600">{errors.bankDetails.bankName.message}</p> : null}
-              </label>
-              <label className="space-y-2">
-                <div className="flex items-center gap-1 text-sm font-medium text-slate-700">Branch <span className="text-rose-600">*</span></div>
-                <input {...register('bankDetails.branch')} readOnly={!isEditable} className={inputClassName(Boolean(errors.bankDetails?.branch), !isEditable)} aria-label="Branch" />
-                {errors.bankDetails?.branch ? <p className="text-sm text-rose-600">{errors.bankDetails.branch.message}</p> : null}
-              </label>
-              <label className="space-y-2">
-                <div className="flex items-center gap-1 text-sm font-medium text-slate-700">Account number <span className="text-rose-600">*</span></div>
-                <input {...register('bankDetails.accountNumber')} type={showAccountNumber ? 'text' : 'password'} readOnly={!isEditable} className={inputClassName(Boolean(errors.bankDetails?.accountNumber), !isEditable)} aria-label="Account number" />
-                {errors.bankDetails?.accountNumber ? <p className="text-sm text-rose-600">{errors.bankDetails.accountNumber.message}</p> : null}
-              </label>
-              <label className="space-y-2">
-                <div className="flex items-center gap-1 text-sm font-medium text-slate-700">Confirm account number <span className="text-rose-600">*</span></div>
-                <input {...register('bankDetails.confirmAccountNumber')} type={showConfirmAccountNumber ? 'text' : 'password'} readOnly={!isEditable} className={inputClassName(Boolean(errors.bankDetails?.confirmAccountNumber), !isEditable)} aria-label="Confirm account number" />
-                {errors.bankDetails?.confirmAccountNumber ? <p className="text-sm text-rose-600">{errors.bankDetails.confirmAccountNumber.message}</p> : null}
-              </label>
-              <label className="space-y-2">
-                <div className="flex items-center gap-1 text-sm font-medium text-slate-700">IFSC code</div>
-                <input {...register('bankDetails.ifscCode')} readOnly={!isEditable} className={inputClassName(Boolean(errors.bankDetails?.ifscCode), !isEditable)} aria-label="IFSC code" onInput={(event) => {
-                  const target = event.currentTarget;
-                  target.value = target.value.toUpperCase();
-                }} />
-                {errors.bankDetails?.ifscCode ? <p className="text-sm text-rose-600">{errors.bankDetails.ifscCode.message}</p> : null}
-              </label>
-              <label className="space-y-2">
-                <div className="flex items-center gap-1 text-sm font-medium text-slate-700">UPI ID</div>
-                <input {...register('bankDetails.upiId')} readOnly={!isEditable} className={inputClassName(Boolean(errors.bankDetails?.upiId), !isEditable)} aria-label="UPI ID" />
-              </label>
-              <label className="space-y-2 md:col-span-2">
-                <div className="flex items-center gap-1 text-sm font-medium text-slate-700">Cancelled cheque upload</div>
-                <input type="file" accept="application/pdf,image/png,image/jpeg,image/jpg" disabled={!isEditable} className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm" aria-label="Cancelled cheque upload" />
-                <p className="text-sm text-slate-500">Allowed formats: PDF, JPG, JPEG, PNG. Maximum size: 5 MB.</p>
-              </label>
-            </div>
+            {expandedSections.payments ? (
+              <div className="space-y-5">
+                <fieldset className="space-y-3">
+                  <legend className="text-sm font-medium text-slate-700">Payment method</legend>
+                  <div className="flex flex-wrap gap-4">
+                    <label className="inline-flex cursor-pointer items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-800">
+                      <input
+                        type="radio"
+                        value="cheque"
+                        disabled={!isEditable}
+                        {...register('bankDetails.paymentMethod')}
+                        className="h-4 w-4 border-slate-300 text-brand-600 focus:ring-brand-500"
+                      />
+                      Pay by cheque
+                    </label>
+                    <label className="inline-flex cursor-pointer items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-800">
+                      <input
+                        type="radio"
+                        value="bank"
+                        disabled={!isEditable}
+                        {...register('bankDetails.paymentMethod')}
+                        className="h-4 w-4 border-slate-300 text-brand-600 focus:ring-brand-500"
+                      />
+                      Pay by bank
+                    </label>
+                  </div>
+                </fieldset>
+
+                {paymentMethod === 'bank' ? (
+                  <>
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <label className="space-y-2">
+                        <div className="flex items-center gap-1 text-sm font-medium text-slate-700">Account holder name <span className="text-rose-600">*</span></div>
+                        <input {...register('bankDetails.accountHolderName')} readOnly={!isEditable} className={inputClassName(Boolean(errors.bankDetails?.accountHolderName), !isEditable)} aria-label="Account holder name" />
+                        {errors.bankDetails?.accountHolderName ? <p className="text-sm text-rose-600">{errors.bankDetails.accountHolderName.message}</p> : null}
+                      </label>
+                      <label className="space-y-2">
+                        <div className="flex items-center gap-1 text-sm font-medium text-slate-700">Bank name <span className="text-rose-600">*</span></div>
+                        <input {...register('bankDetails.bankName')} list="bank-name-options" readOnly={!isEditable} className={inputClassName(Boolean(errors.bankDetails?.bankName), !isEditable)} aria-label="Bank name" />
+                        <datalist id="bank-name-options">
+                          {bankOptions.map((bank) => <option key={bank} value={bank} />)}
+                        </datalist>
+                        {errors.bankDetails?.bankName ? <p className="text-sm text-rose-600">{errors.bankDetails.bankName.message}</p> : null}
+                      </label>
+                      <label className="space-y-2">
+                        <div className="flex items-center gap-1 text-sm font-medium text-slate-700">Branch <span className="text-rose-600">*</span></div>
+                        <input {...register('bankDetails.branch')} readOnly={!isEditable} className={inputClassName(Boolean(errors.bankDetails?.branch), !isEditable)} aria-label="Branch" />
+                        {errors.bankDetails?.branch ? <p className="text-sm text-rose-600">{errors.bankDetails.branch.message}</p> : null}
+                      </label>
+                      <label className="space-y-2">
+                        <div className="flex items-center gap-1 text-sm font-medium text-slate-700">Account number <span className="text-rose-600">*</span></div>
+                        <input {...register('bankDetails.accountNumber')} type={showAccountNumber ? 'text' : 'password'} readOnly={!isEditable} className={inputClassName(Boolean(errors.bankDetails?.accountNumber), !isEditable)} aria-label="Account number" />
+                        {errors.bankDetails?.accountNumber ? <p className="text-sm text-rose-600">{errors.bankDetails.accountNumber.message}</p> : null}
+                      </label>
+                      <label className="space-y-2">
+                        <div className="flex items-center gap-1 text-sm font-medium text-slate-700">Confirm account number <span className="text-rose-600">*</span></div>
+                        <input {...register('bankDetails.confirmAccountNumber')} type={showConfirmAccountNumber ? 'text' : 'password'} readOnly={!isEditable} className={inputClassName(Boolean(errors.bankDetails?.confirmAccountNumber), !isEditable)} aria-label="Confirm account number" />
+                        {errors.bankDetails?.confirmAccountNumber ? <p className="text-sm text-rose-600">{errors.bankDetails.confirmAccountNumber.message}</p> : null}
+                      </label>
+                      <label className="space-y-2">
+                        <div className="flex items-center gap-1 text-sm font-medium text-slate-700">IFSC code</div>
+                        <input {...register('bankDetails.ifscCode')} readOnly={!isEditable} className={inputClassName(Boolean(errors.bankDetails?.ifscCode), !isEditable)} aria-label="IFSC code" onInput={(event) => {
+                          const target = event.currentTarget;
+                          target.value = target.value.toUpperCase();
+                        }} />
+                        {errors.bankDetails?.ifscCode ? <p className="text-sm text-rose-600">{errors.bankDetails.ifscCode.message}</p> : null}
+                      </label>
+                      <label className="space-y-2">
+                        <div className="flex items-center gap-1 text-sm font-medium text-slate-700">UPI ID</div>
+                        <input {...register('bankDetails.upiId')} readOnly={!isEditable} className={inputClassName(Boolean(errors.bankDetails?.upiId), !isEditable)} aria-label="UPI ID" />
+                      </label>
+                      <label className="space-y-2 md:col-span-2">
+                        <div className="flex items-center gap-1 text-sm font-medium text-slate-700">Cancelled cheque upload</div>
+                        <input type="file" accept="application/pdf,image/png,image/jpeg,image/jpg" disabled={!isEditable} className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm" aria-label="Cancelled cheque upload" />
+                        <p className="text-sm text-slate-500">Allowed formats: PDF, JPG, JPEG, PNG. Maximum size: 5 MB.</p>
+                      </label>
+                    </div>
+                    <div className="flex flex-wrap gap-3">
+                      <button type="button" onClick={() => setShowAccountNumber((value) => !value)} className="rounded-2xl border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700">
+                        {showAccountNumber ? 'Hide account number' : 'Show account number'}
+                      </button>
+                      <button type="button" onClick={() => setShowConfirmAccountNumber((value) => !value)} className="rounded-2xl border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700">
+                        {showConfirmAccountNumber ? 'Hide confirm number' : 'Show confirm number'}
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <p className="rounded-2xl border border-dashed border-slate-200 bg-white px-4 py-3 text-sm text-slate-500">
+                    Bank account details are not required when paying by cheque.
+                  </p>
+                )}
+              </div>
             ) : null}
-            <div className="mt-4 flex flex-wrap gap-3">
-              <button type="button" onClick={() => setShowAccountNumber((value) => !value)} className="rounded-2xl border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700">
-                {showAccountNumber ? 'Hide account number' : 'Show account number'}
-              </button>
-              <button type="button" onClick={() => setShowConfirmAccountNumber((value) => !value)} className="rounded-2xl border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700">
-                {showConfirmAccountNumber ? 'Hide confirm number' : 'Show confirm number'}
-              </button>
-            </div>
           </section>
 
           <section className="rounded-[24px] border border-slate-200 bg-slate-50 p-5">

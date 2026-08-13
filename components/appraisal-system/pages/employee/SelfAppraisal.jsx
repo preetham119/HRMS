@@ -1,11 +1,14 @@
-import { Component, useEffect, useMemo, useState } from 'react';
+import { Component, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Card, CardContent, Typography, Stack, TextField, Button, Box,
-  Alert, CircularProgress, Chip, LinearProgress, Paper,
+  Alert, CircularProgress, Chip, LinearProgress, Paper, IconButton,
 } from '@mui/material';
 import SaveIcon from '@mui/icons-material/Save';
 import SendIcon from '@mui/icons-material/Send';
 import RefreshIcon from '@mui/icons-material/Refresh';
+import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import InsertDriveFileOutlinedIcon from '@mui/icons-material/InsertDriveFileOutlined';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
@@ -16,6 +19,25 @@ import {
   StarRating, CompetencyRatingCard, RatingSummaryBar, StarScore,
 } from '../../components/common/StarRating';
 import { averageRating } from '../../utils/helpers';
+
+const MAX_PROOF_BYTES = 5 * 1024 * 1024;
+const ALLOWED_PROOF_TYPES = [
+  'application/pdf',
+  'image/png',
+  'image/jpeg',
+  'image/jpg',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+];
+
+function readFileAsDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ''));
+    reader.onerror = () => reject(new Error('Failed to read file'));
+    reader.readAsDataURL(file);
+  });
+}
 
 class SelfAppraisalBoundary extends Component {
   constructor(props) {
@@ -60,7 +82,10 @@ function SelfAppraisalForm() {
   });
   const [compRatings, setCompRatings] = useState({});
   const [goalRatings, setGoalRatings] = useState({});
+  const [documents, setDocuments] = useState([]);
+  const [uploadingProof, setUploadingProof] = useState(false);
   const [confirmSubmit, setConfirmSubmit] = useState(false);
+  const proofInputRef = useRef(null);
 
   const { data, isLoading, isError, error, refetch, isFetching } = useQuery({
     queryKey: ['my-appraisal', user?.employeeId || user?.email || 'anon'],
@@ -100,6 +125,7 @@ function SelfAppraisalForm() {
     });
     setCompRatings(cr);
     setGoalRatings(gr);
+    setDocuments(Array.isArray(data.documents) ? data.documents : (a.documents || []));
   }, [data]);
 
   const saveMutation = useMutation({
@@ -136,6 +162,7 @@ function SelfAppraisalForm() {
   const buildPayload = (submit) => ({
     ...form,
     submit,
+    documents,
     competency_ratings: Object.entries(compRatings)
       .filter(([, score]) => Number(score) > 0)
       .map(([competency_id, score]) => ({
@@ -149,6 +176,50 @@ function SelfAppraisalForm() {
         score: Number(score),
       })),
   });
+
+  const handleProofUpload = async (event) => {
+    const files = Array.from(event.target.files || []);
+    event.target.value = '';
+    if (!files.length) return;
+
+    setUploadingProof(true);
+    try {
+      const nextDocs = [...documents];
+      for (const file of files) {
+        const typeOk = ALLOWED_PROOF_TYPES.includes(file.type)
+          || /\.(pdf|png|jpe?g|doc|docx)$/i.test(file.name);
+        if (!typeOk) {
+          toast.error(`${file.name}: use PDF, Word, JPG, or PNG.`);
+          continue;
+        }
+        if (file.size > MAX_PROOF_BYTES) {
+          toast.error(`${file.name}: max size is 5 MB.`);
+          continue;
+        }
+        const dataUrl = await readFileAsDataUrl(file);
+        nextDocs.push({
+          id: `doc-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+          original_name: file.name,
+          file_path: dataUrl,
+          mime_type: file.type,
+          size: file.size,
+          uploaded_at: new Date().toISOString(),
+        });
+      }
+      setDocuments(nextDocs);
+      if (nextDocs.length > documents.length) {
+        toast.success('Proof of achievement attached. Save draft or submit to keep it.');
+      }
+    } catch (err) {
+      toast.error(err?.message || 'Failed to upload proof.');
+    } finally {
+      setUploadingProof(false);
+    }
+  };
+
+  const removeProof = (docId) => {
+    setDocuments((prev) => prev.filter((doc) => doc.id !== docId));
+  };
 
   const handleSubmitClick = () => {
     if (!form.achievements?.trim()) {
@@ -229,7 +300,7 @@ function SelfAppraisalForm() {
 
       <Alert severity={editable ? 'info' : 'success'} sx={{ mb: 2 }}>
         {editable
-          ? 'Fill achievements, rate yourself, rate at least 3 competencies, then Submit.'
+          ? 'Fill achievements, upload proof if available, rate yourself, rate at least 3 competencies, then Submit.'
           : 'This appraisal is submitted and locked while it moves through Manager → Admin → CEO.'}
       </Alert>
 
@@ -253,6 +324,85 @@ function SelfAppraisalForm() {
                 onChange={(e) => setForm({ ...form, achievements: e.target.value })}
                 placeholder="Key achievements this cycle…"
               />
+
+              <Box>
+                <Typography variant="subtitle2" fontWeight={700} gutterBottom>
+                  Proof of Achievements
+                </Typography>
+                <Typography variant="body2" color="text.secondary" mb={1.5}>
+                  Upload supporting files (PDF, Word, JPG, PNG — max 5 MB each). Reviewers can open these during appraisal review.
+                </Typography>
+
+                {editable && (
+                  <Stack direction="row" spacing={1.5} alignItems="center" mb={1.5}>
+                    <Button
+                      variant="outlined"
+                      startIcon={uploadingProof ? <CircularProgress size={16} /> : <CloudUploadIcon />}
+                      onClick={() => proofInputRef.current?.click()}
+                      disabled={uploadingProof || saveMutation.isPending}
+                    >
+                      Upload proof
+                    </Button>
+                    <input
+                      ref={proofInputRef}
+                      type="file"
+                      hidden
+                      multiple
+                      accept=".pdf,.png,.jpg,.jpeg,.doc,.docx,application/pdf,image/png,image/jpeg,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                      onChange={handleProofUpload}
+                    />
+                    <Typography variant="caption" color="text.secondary">
+                      {documents.length} file{documents.length === 1 ? '' : 's'} attached
+                    </Typography>
+                  </Stack>
+                )}
+
+                <Stack spacing={1}>
+                  {documents.map((doc) => (
+                    <Paper
+                      key={doc.id}
+                      variant="outlined"
+                      sx={{
+                        px: 1.5,
+                        py: 1,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1,
+                      }}
+                    >
+                      <InsertDriveFileOutlinedIcon fontSize="small" color="primary" />
+                      <Chip
+                        size="small"
+                        label={doc.original_name}
+                        component="a"
+                        href={doc.file_path}
+                        target="_blank"
+                        rel="noreferrer"
+                        clickable
+                        color="primary"
+                        variant="outlined"
+                        sx={{ maxWidth: '70%' }}
+                      />
+                      {editable && (
+                        <IconButton
+                          size="small"
+                          aria-label={`Remove ${doc.original_name}`}
+                          onClick={() => removeProof(doc.id)}
+                          sx={{ ml: 'auto' }}
+                        >
+                          <DeleteOutlineIcon fontSize="small" />
+                        </IconButton>
+                      )}
+                    </Paper>
+                  ))}
+                  {!documents.length && (
+                    <Typography variant="body2" color="text.secondary">
+                      No proof uploaded yet.
+                    </Typography>
+                  )}
+                </Stack>
+              </Box>
+
               <TextField
                 label="Challenges"
                 multiline

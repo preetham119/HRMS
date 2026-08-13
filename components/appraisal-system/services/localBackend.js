@@ -34,18 +34,19 @@ const wrap = (fn) => {
 const now = () => new Date().toISOString();
 
 const PEOPLE = [
-  { id: 'EMP001', employee_code: 'EMP001', first_name: 'Rajesh', last_name: 'Kumar', name: 'Rajesh Kumar', email: 'employee@company.com', designation: 'Senior QA Lead', department: 'Quality Assurance', department_name: 'Quality Assurance', manager_id: 'MGR001', active: true },
-  { id: 'EMP002', employee_code: 'EMP002', first_name: 'Sneha', last_name: 'Reddy', name: 'Sneha Reddy', email: 'employee2@company.com', designation: 'Frontend Developer', department: 'Engineering', department_name: 'Engineering', manager_id: 'MGR001', active: true },
-  { id: 'EMP003', employee_code: 'EMP003', first_name: 'Karthik', last_name: 'Iyer', name: 'Karthik Iyer', email: 'employee3@company.com', designation: 'Backend Developer', department: 'Engineering', department_name: 'Engineering', manager_id: 'MGR001', active: true },
-  { id: 'MGR001', employee_code: 'MGR001', first_name: 'Anita', last_name: 'Desai', name: 'Anita Desai', email: 'manager@company.com', designation: 'Engineering Manager', department: 'Engineering', department_name: 'Engineering', active: true },
-  { id: 'HR001', employee_code: 'HR001', first_name: 'HR', last_name: 'Admin', name: 'HR Admin', email: 'hr@company.com', designation: 'HR Manager', department: 'Human Resources', department_name: 'Human Resources', active: true },
-  { id: 'ADM001', employee_code: 'ADM001', first_name: 'System', last_name: 'Admin', name: 'System Admin', email: 'admin@company.com', designation: 'Administrator', department: 'Administration', department_name: 'Administration', active: true },
-  { id: 'CEO001', employee_code: 'CEO001', first_name: 'Arjun', last_name: 'Mehta', name: 'Arjun Mehta', email: 'ceo@company.com', designation: 'Chief Executive Officer', department: 'Executive Office', department_name: 'Executive Office', active: true },
+  { id: 'EMP001', employee_code: 'EMP001', first_name: 'Rajesh', last_name: 'Kumar', name: 'Rajesh Kumar', email: 'employee@company.com', designation: 'Senior QA Lead', department: 'Quality Assurance', department_name: 'Quality Assurance', manager_id: 'EMP004', active: true },
+  { id: 'EMP002', employee_code: 'EMP002', first_name: 'Sneha', last_name: 'Reddy', name: 'Sneha Reddy', email: 'employee2@company.com', designation: 'Frontend Developer', department: 'Engineering', department_name: 'Engineering', manager_id: 'EMP004', active: true },
+  { id: 'EMP003', employee_code: 'EMP003', first_name: 'Karthik', last_name: 'Iyer', name: 'Karthik Iyer', email: 'employee3@company.com', designation: 'Backend Developer', department: 'Engineering', department_name: 'Engineering', manager_id: 'EMP004', active: true },
+  { id: 'EMP004', employee_code: 'EMP004', first_name: 'Anita', last_name: 'Desai', name: 'Anita Desai', email: 'manager@company.com', designation: 'Engineering Manager', department: 'Engineering', department_name: 'Engineering', manager_id: 'EMP008', active: true },
+  { id: 'EMP005', employee_code: 'EMP005', first_name: 'HR', last_name: 'Admin', name: 'HR Admin', email: 'hr@company.com', designation: 'HR Manager', department: 'Human Resources', department_name: 'Human Resources', active: true },
+  { id: 'EMP006', employee_code: 'EMP006', first_name: 'Vikram', last_name: 'Shah', name: 'Vikram Shah', email: 'finance@company.com', designation: 'Finance Lead', department: 'Finance', department_name: 'Finance', active: true },
+  { id: 'EMP007', employee_code: 'EMP007', first_name: 'System', last_name: 'Admin', name: 'System Admin', email: 'admin@company.com', designation: 'Administrator', department: 'Administration', department_name: 'Administration', active: true },
+  { id: 'EMP008', employee_code: 'EMP008', first_name: 'Arjun', last_name: 'Mehta', name: 'Arjun Mehta', email: 'ceo@company.com', designation: 'Chief Executive Officer', department: 'Executive Office', department_name: 'Executive Office', active: true },
 ];
 
 const DEPARTMENTS = [
-  { id: 'dept-qa', name: 'Quality Assurance', code: 'QA', manager_id: 'MGR001', employee_count: 1 },
-  { id: 'dept-eng', name: 'Engineering', code: 'ENG', manager_id: 'MGR001', employee_count: 2 },
+  { id: 'dept-qa', name: 'Quality Assurance', code: 'QA', manager_id: 'EMP004', employee_count: 1 },
+  { id: 'dept-eng', name: 'Engineering', code: 'ENG', manager_id: 'EMP004', employee_count: 2 },
   { id: 'dept-hr', name: 'Human Resources', code: 'HR', employee_count: 1 },
 ];
 
@@ -54,11 +55,11 @@ const EMAIL_EMPLOYEE_IDS = {
   'employee2@company.com': 'EMP002',
   'sneha.reddy@company.com': 'EMP002',
   'employee3@company.com': 'EMP003',
-  'manager@company.com': 'MGR001',
-  'hr@company.com': 'HR001',
-  'admin@company.com': 'ADM001',
-  'ceo@company.com': 'CEO001',
-  'finance@company.com': 'FIN001',
+  'manager@company.com': 'EMP004',
+  'hr@company.com': 'EMP005',
+  'finance@company.com': 'EMP006',
+  'admin@company.com': 'EMP007',
+  'ceo@company.com': 'EMP008',
 };
 
 function actor() {
@@ -92,8 +93,10 @@ function actor() {
 function storeActor() {
   const user = actor();
   const roleMap = {
-    employee: 'EMPLOYEE',
-    EMPLOYEE: 'EMPLOYEE',
+    employee: 'EMPLOYEE_PR',
+    EMPLOYEE: 'EMPLOYEE_PR',
+    EMPLOYEE_PR: 'EMPLOYEE_PR',
+    EMPLOYEE_CONT: 'EMPLOYEE_CONT',
     manager: 'MANAGER',
     MANAGER: 'MANAGER',
     hr: 'HR',
@@ -110,7 +113,7 @@ function storeActor() {
     employeeId: user.employeeId || user.id,
     email: user.email,
     name: `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.name || user.email,
-    role: roleMap[user.role] || 'EMPLOYEE',
+    role: roleMap[user.role] || 'EMPLOYEE_PR',
     department: user.department,
   };
 }
@@ -152,6 +155,7 @@ function reviewRows(appraisals) {
       overall_rating: manager?.overallRating ?? null,
       final_rating: leadership?.finalRating ?? admin?.finalRating ?? null,
       hr_rating: admin?.finalRating ?? null,
+      admin_rating: admin?.finalRating ?? null,
       progress: appraisal.status === 'completed' ? 100 : appraisal.status === 'under_leadership_review' ? 85 : appraisal.status === 'under_admin_review' ? 65 : appraisal.status === 'under_manager_review' ? 40 : 15,
       rating: leadership?.finalRating ?? admin?.finalRating ?? manager?.overallRating ?? appraisal.selfRating,
     };
@@ -166,11 +170,30 @@ function ratingsFor(bundle) {
     rated_by: ratedBy,
     rating_type: type,
   }));
+  const adminStored = make(bundle.adminReview?.competencyRatings, 'admin', 'competency');
+  // When Admin only set an overall final rating, mirror it across competencies so charts can show an Admin series.
+  let adminCompetency = adminStored;
+  if (!adminCompetency.length && bundle.adminReview?.finalRating != null) {
+    const refs = new Set([
+      ...(bundle.appraisal.competencyRatings || []).map((e) => e.referenceId),
+      ...(bundle.managerReview?.competencyRatings || []).map((e) => e.referenceId),
+      ...(bundle.competencies || []).map((c) => c.id),
+    ]);
+    const score = Number(bundle.adminReview.finalRating);
+    adminCompetency = [...refs].filter(Boolean).map((reference_id) => ({
+      reference_id,
+      score,
+      comments: '',
+      rated_by: 'admin',
+      rating_type: 'competency',
+    }));
+  }
   return [
     ...make(bundle.appraisal.competencyRatings, 'employee', 'competency'),
     ...make(bundle.appraisal.goalRatings, 'employee', 'goal'),
     ...make(bundle.managerReview?.competencyRatings, 'manager', 'competency'),
     ...make(bundle.managerReview?.goalRatings, 'manager', 'goal'),
+    ...adminCompetency,
   ];
 }
 
@@ -232,10 +255,10 @@ function progressDetailFor(id) {
     || ['under_leadership_review', 'completed'].includes(status);
   const leadershipDone = leadershipReview?.status === 'submitted' || status === 'completed';
   const stages = [
-    { id: 'self', label: 'Self Evaluation', done: selfDone, date: appraisal.submittedAt || appraisal.submitted_at || null },
-    { id: 'manager', label: 'Manager Review', done: managerDone, date: managerReview?.submittedAt || managerReview?.submitted_at || null },
-    { id: 'admin', label: 'Admin Review', done: adminDone, date: adminReview?.submittedAt || adminReview?.submitted_at || null },
-    { id: 'leadership', label: 'Leadership Review', done: leadershipDone, date: leadershipReview?.submittedAt || leadershipReview?.submitted_at || null },
+    { id: 'self', label: 'Self Evaluation', done: selfDone, color: '#1976D2' },
+    { id: 'manager', label: 'Manager Review', done: managerDone, color: '#43A047' },
+    { id: 'admin', label: 'Admin Review', done: adminDone, color: '#FB8C00' },
+    { id: 'leadership', label: 'Leadership Review', done: leadershipDone, color: '#00897B' },
   ];
   const completedSteps = stages.filter((s) => s.done).length;
   const progress = Math.round((completedSteps / stages.length) * 100);
@@ -276,7 +299,8 @@ function buildWorkflow(status = 'draft', role = 'employee') {
       { id: 'leadership', label: 'Leadership' },
     ],
     manager: [
-      { id: 'team_goals', label: 'Team Goal Setting' },
+      { id: 'self_goals', label: 'My Goals' },
+      { id: 'self_assessment', label: 'My Self Assessment' },
       { id: 'team_self', label: 'Team Self Assessment' },
       { id: 'review', label: 'Review Assessments' },
       { id: 'feedback', label: 'Provide Feedback' },
@@ -295,9 +319,9 @@ function buildWorkflow(status = 'draft', role = 'employee') {
     ],
     leadership: [
       { id: 'cycle', label: 'Cycle Open' },
-      { id: 'intake', label: 'Reviews Received' },
-      { id: 'recommend', label: 'Recommendations' },
-      { id: 'final', label: 'Team Finalized' },
+      { id: 'manager', label: 'Manager Review' },
+      { id: 'admin', label: 'Admin Review' },
+      { id: 'final', label: 'Leadership Decision' },
     ],
   };
   const stepsDef = templates[role] || templates.employee;
@@ -305,9 +329,22 @@ function buildWorkflow(status = 'draft', role = 'employee') {
   if (role === 'employee') {
     if (status === 'completed') activeIndex = stepsDef.length;
     else if (status === 'under_leadership_review') activeIndex = 4;
-    else if (status === 'under_admin_review') activeIndex = 3;
+    else if (status === 'under_admin_review' || status === 'under_hr_review') activeIndex = 3;
     else if (status === 'under_manager_review') activeIndex = 2;
     else if (status === 'draft' || status === 'returned') activeIndex = 1;
+    else activeIndex = 0;
+  } else if (role === 'manager') {
+    if (status === 'completed') activeIndex = stepsDef.length;
+    else if (status === 'under_leadership_review') activeIndex = 5;
+    else if (status === 'under_admin_review' || status === 'under_hr_review') activeIndex = 4;
+    else if (status === 'under_manager_review') activeIndex = 3;
+    else if (status === 'draft' || status === 'returned') activeIndex = 1;
+    else activeIndex = 2;
+  } else if (role === 'leadership') {
+    if (status === 'completed') activeIndex = stepsDef.length;
+    else if (status === 'under_leadership_review') activeIndex = 3; // Admin done → Leadership active
+    else if (status === 'under_admin_review' || status === 'under_hr_review') activeIndex = 2;
+    else if (status === 'under_manager_review') activeIndex = 1;
     else activeIndex = 0;
   } else if (status === 'completed') {
     activeIndex = stepsDef.length;
@@ -331,6 +368,8 @@ function buildWorkflow(status = 'draft', role = 'employee') {
         ? 'All steps complete. No further action needed.'
         : role === 'employee' && (status === 'draft' || status === 'returned')
           ? 'Complete and submit your self-assessment.'
+        : role === 'manager' && (status === 'draft' || status === 'returned')
+          ? 'Complete and submit your self-assessment.'
           : role === 'manager'
             ? 'Review pending team appraisals.'
             : role === 'admin'
@@ -341,14 +380,18 @@ function buildWorkflow(status = 'draft', role = 'employee') {
     actionLink:
       role === 'employee'
         ? '/employee/self-appraisal'
-        : role === 'manager'
-          ? '/manager/pending-reviews'
+        : role === 'manager' && (status === 'draft' || status === 'returned')
+          ? '/manager/self-appraisal'
+          : role === 'manager'
+            ? '/manager/pending-reviews'
           : role === 'admin'
             ? '/admin/approvals'
             : role === 'leadership'
               ? '/leadership/approvals'
               : '/hr/reports',
-    actionLabel: role === 'employee' ? 'Open Self Appraisal' : 'Open Queue',
+    actionLabel: role === 'employee' || (role === 'manager' && (status === 'draft' || status === 'returned'))
+      ? 'Open Self Appraisal'
+      : 'Open Queue',
   };
 }
 
@@ -396,7 +439,7 @@ function dashboardEmployee() {
     ? state.appraisals.find((item) => item.employeeId === user.employeeId && item.cycleId === cycle.id)
     : state.appraisals.find((item) => item.employeeId === user.employeeId);
   const goals = listGoalsForEmployee(user.employeeId, state, cycle?.id);
-  const manager = PEOPLE.find((item) => item.id === (appraisal?.managerId || 'MGR001'));
+  const manager = PEOPLE.find((item) => item.id === (appraisal?.managerId || 'EMP004'));
   const notifications = listNotificationsForRecipient(user.employeeId, state).map(snakeNotification);
   return {
     profileBanner: profileBanner(),
@@ -414,12 +457,24 @@ function dashboardEmployee() {
 
 function dashboardManager() {
   const user = actor();
+  const state = getAppraisalState();
+  const cycle = getOpenCycle(state);
+  const ownAppraisal = state.appraisals.find(
+    (item) => item.employeeId === user.employeeId && (!cycle || item.cycleId === cycle.id),
+  );
   const pending = listManagerPending(user.employeeId);
   const completed = listManagerCompleted(user.employeeId);
   const ratings = completed.map((a) => getAppraisalState().managerReviews.find((r) => r.appraisalId === a.id)?.overallRating).filter(Boolean);
+  const ownStatus = ownAppraisal?.status || (cycle ? 'draft' : 'not_started');
+  const teamStatus = pending.length ? 'under_manager_review' : completed.length ? 'completed' : 'draft';
+  const needsOwnSelfAppraisal = ['draft', 'returned', 'not_started'].includes(ownStatus);
   return {
     profileBanner: profileBanner(),
-    workflowProgress: buildWorkflow(pending.length ? 'under_manager_review' : completed.length ? 'completed' : 'draft', 'manager'),
+    workflowProgress: buildWorkflow(
+      needsOwnSelfAppraisal ? ownStatus : teamStatus,
+      needsOwnSelfAppraisal ? 'manager' : 'manager',
+    ),
+    ownAppraisalStatus: ownStatus,
     teamCount: PEOPLE.filter((p) => p.manager_id === user.employeeId).length,
     pendingCount: pending.length,
     completedCount: completed.length,
@@ -566,6 +621,11 @@ function normaliseRatings(items, type) {
 }
 
 function stagePayload(payload) {
+  const competencyRatings = (payload.competency_ratings || []).map((r) => ({
+    referenceId: r.reference_id ?? r.referenceId,
+    score: Number(r.score),
+    comments: r.comments || '',
+  })).filter((r) => r.referenceId != null && !Number.isNaN(r.score));
   return {
     comments: payload.comments || '',
     developmentPlan: payload.development_plan || '',
@@ -578,6 +638,7 @@ function stagePayload(payload) {
     training: payload.recommended_training || payload.training || '',
     highPotential: !!payload.high_potential,
     finalRating: payload.final_rating === '' || payload.final_rating == null ? null : Number(payload.final_rating),
+    competencyRatings,
     submit: !!payload.submit,
   };
 }
@@ -637,6 +698,7 @@ export const appraisalApi = {
     const goals = (bundle?.goals && bundle.goals.length)
       ? bundle.goals
       : listGoalsForEmployee(actor().employeeId, latest, cycle.id).map((g) => snakeGoal(g, latest));
+    const documents = appraisal?.documents || bundle?.documents || [];
     return ok({
       appraisal: bundle?.appraisal || (appraisal ? {
         ...appraisal,
@@ -646,21 +708,36 @@ export const appraisalApi = {
         employee_code: appraisal.employeeId,
         department_name: appraisal.department,
         cycle_name: cycle.name,
+        documents,
       } : null),
       ratings: bundle?.ratings || [],
-      documents: [],
+      documents,
       goals,
       cycle: snakeCycle(cycle, latest),
     });
   }),
   saveMy: (payload) => wrap(() => {
+    const documents = Array.isArray(payload.documents)
+      ? payload.documents.map((doc, index) => ({
+          id: doc.id || `doc-${Date.now()}-${index}`,
+          original_name: doc.original_name || doc.name || `Proof-${index + 1}`,
+          file_path: doc.file_path || doc.url || '',
+          mime_type: doc.mime_type || doc.type || '',
+          size: doc.size || 0,
+          uploaded_at: doc.uploaded_at || now(),
+        })).filter((doc) => doc.file_path)
+      : undefined;
     const appraisal = persistSelfAppraisal(storeActor(), {
-      achievements: payload.achievements || '', challenges: payload.challenges || '', selfFeedback: payload.self_feedback || '',
+      achievements: payload.achievements || '',
+      challenges: payload.challenges || '',
+      selfFeedback: payload.self_feedback || '',
       selfRating: payload.self_rating == null ? null : Number(payload.self_rating),
       competencyRatings: normaliseRatings(payload.competency_ratings, 'competency'),
-      goalRatings: normaliseRatings(payload.goal_ratings, 'goal'), submit: !!payload.submit,
+      goalRatings: normaliseRatings(payload.goal_ratings, 'goal'),
+      documents,
+      submit: !!payload.submit,
     });
-    return ok({ id: appraisal.id }, payload.submit ? 'Self appraisal submitted' : 'Self appraisal saved');
+    return ok({ id: appraisal.id, documents: appraisal.documents || [] }, payload.submit ? 'Self appraisal submitted' : 'Self appraisal saved');
   }),
   history: () => ok(getAppraisalState().appraisals.filter((a) => a.employeeId === actor().employeeId).map((a) => reviewRows([a])[0])),
   feedback: () => {
@@ -694,7 +771,7 @@ export const appraisalApi = {
     }
     return Promise.resolve({ data: { success: true, data: rows, pagination: { total: rows.length }, total: rows.length } });
   },
-  leadershipReview: (id) => ok(bundleFor(id)),
+  leadershipReview: (id) => ok(progressDetailFor(id)),
   saveLeadershipReview: (id, payload) => wrap(() => ok(persistLeadershipReview(storeActor(), id, stagePayload(payload)), payload.submit ? 'Leadership review submitted' : 'Leadership review saved')),
   adminQueue: (params = {}) => {
     const state = getAppraisalState();
@@ -707,7 +784,7 @@ export const appraisalApi = {
     }
     return Promise.resolve({ data: { success: true, data: rows, pagination: { total: rows.length }, total: rows.length } });
   },
-  adminReview: (id) => ok(bundleFor(id)),
+  adminReview: (id) => ok(progressDetailFor(id)),
   saveAdminReview: (id, payload) => wrap(() => ok(persistAdminReview(storeActor(), id, stagePayload(payload)), payload.submit ? 'Admin review submitted' : 'Admin review saved')),
   /** Clears self-appraisal + manager/admin/leadership reviews back to blank demo seed. */
   resetDemo: () => ok(resetAppraisalState(), 'Appraisal demo reset for all roles'),
@@ -811,7 +888,7 @@ export const employeeApi = {
 };
 export const managerApi = {
   list: (params) => {
-    const rows = listResponse(PEOPLE.filter((p) => p.id === 'MGR001'), params);
+    const rows = listResponse(PEOPLE.filter((p) => p.id === 'EMP004'), params);
     return Promise.resolve({ data: { success: true, data: rows, total: rows.length, pagination: { total: rows.length } } });
   },
   get: (id) => ok(PEOPLE.find((p) => p.id === id)),
@@ -914,7 +991,7 @@ export const reportApi = {
         },
         filters: {
           departments: DEPARTMENTS.map((d) => ({ id: d.id, name: d.name })),
-          managers: PEOPLE.filter((p) => p.id === 'MGR001').map((m) => ({ id: m.id, name: m.name })),
+          managers: PEOPLE.filter((p) => p.id === 'EMP004').map((m) => ({ id: m.id, name: m.name })),
           cycles: state.cycles.map((c) => ({ id: c.id, name: c.name })),
         },
       },

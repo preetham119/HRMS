@@ -12,10 +12,17 @@ export type HelpDeskPermission =
   | 'helpdesk:manage'
   | 'helpdesk:inbox';
 
+const EMPLOYEE_HELPDESK: readonly HelpDeskPermission[] = [
+  'helpdesk:view',
+  'helpdesk:create',
+  'helpdesk:comment',
+];
+
 const ROLE_PERMISSIONS: Record<AppRole, readonly HelpDeskPermission[]> = {
-  EMPLOYEE: ['helpdesk:view', 'helpdesk:create', 'helpdesk:comment'],
-  MANAGER: ['helpdesk:view', 'helpdesk:create', 'helpdesk:comment'],
-  FINANCE: ['helpdesk:view', 'helpdesk:create', 'helpdesk:comment'],
+  EMPLOYEE_PR: EMPLOYEE_HELPDESK,
+  EMPLOYEE_CONT: EMPLOYEE_HELPDESK,
+  MANAGER: EMPLOYEE_HELPDESK,
+  FINANCE: EMPLOYEE_HELPDESK,
   HR: ['helpdesk:view', 'helpdesk:create', 'helpdesk:comment', 'helpdesk:manage', 'helpdesk:inbox'],
   ADMIN: ['helpdesk:view', 'helpdesk:create', 'helpdesk:comment', 'helpdesk:manage', 'helpdesk:inbox'],
   CEO: ['helpdesk:view', 'helpdesk:create', 'helpdesk:comment', 'helpdesk:manage', 'helpdesk:inbox'],
@@ -23,7 +30,7 @@ const ROLE_PERMISSIONS: Record<AppRole, readonly HelpDeskPermission[]> = {
 
 export function getHelpDeskPermissions(role: AppRole | null | undefined): HelpDeskPermission[] {
   if (!role) return [];
-  return [...(ROLE_PERMISSIONS[role] ?? ROLE_PERMISSIONS.EMPLOYEE)];
+  return [...(ROLE_PERMISSIONS[role] ?? ROLE_PERMISSIONS.EMPLOYEE_PR)];
 }
 
 export function hasHelpDeskPermission(

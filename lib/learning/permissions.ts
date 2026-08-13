@@ -14,9 +14,17 @@ export type LearningPermission =
   | 'learning:trainer'
   | 'learning:admin';
 
+const EMPLOYEE_LEARNING: readonly LearningPermission[] = [
+  'learning:view',
+  'learning:enroll',
+  'learning:quiz',
+  'learning:assignment',
+];
+
 const ROLE_PERMISSIONS: Record<AppRole, readonly LearningPermission[]> = {
-  EMPLOYEE: ['learning:view', 'learning:enroll', 'learning:quiz', 'learning:assignment'],
-  FINANCE: ['learning:view', 'learning:enroll', 'learning:quiz', 'learning:assignment'],
+  EMPLOYEE_PR: EMPLOYEE_LEARNING,
+  EMPLOYEE_CONT: EMPLOYEE_LEARNING,
+  FINANCE: EMPLOYEE_LEARNING,
   MANAGER: [
     'learning:view',
     'learning:enroll',
@@ -38,12 +46,12 @@ const ROLE_PERMISSIONS: Record<AppRole, readonly LearningPermission[]> = {
     'learning:assignment',
     'learning:admin',
   ],
-  CEO: ['learning:view', 'learning:enroll', 'learning:quiz', 'learning:assignment'],
+  CEO: EMPLOYEE_LEARNING,
 };
 
 export function getLearningPermissions(role: AppRole | null | undefined): LearningPermission[] {
   if (!role) return [];
-  return [...(ROLE_PERMISSIONS[role] ?? ROLE_PERMISSIONS.EMPLOYEE)];
+  return [...(ROLE_PERMISSIONS[role] ?? ROLE_PERMISSIONS.EMPLOYEE_PR)];
 }
 
 export function hasLearningPermission(

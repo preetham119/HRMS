@@ -15,7 +15,6 @@ interface DocumentAccordionProps {
   onToggle: () => void;
   onPreview?: (document: DocumentItem) => void;
   onDownload?: (document: DocumentItem) => void;
-  onDelete?: (document: DocumentItem) => void;
 }
 
 export default function DocumentAccordion({
@@ -25,7 +24,6 @@ export default function DocumentAccordion({
   onToggle,
   onPreview,
   onDownload,
-  onDelete,
 }: DocumentAccordionProps) {
   const [searchText, setSearchText] = useState('');
   const [sortOption, setSortOption] = useState<SortOption>('newest');
@@ -74,7 +72,6 @@ export default function DocumentAccordion({
                   document={document}
                   onPreview={onPreview}
                   onDownload={onDownload}
-                  onDelete={onDelete}
                 />
               ))}
             </div>

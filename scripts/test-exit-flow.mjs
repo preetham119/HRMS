@@ -94,7 +94,7 @@ async function main() {
     email: 'manager@company.com',
     name: 'Anita Desai',
     role: 'MANAGER',
-    employeeId: 'MGR001',
+    employeeId: 'EMP004',
     department: 'Engineering',
   };
 
@@ -103,7 +103,7 @@ async function main() {
     email: 'hr@company.com',
     name: 'HR Admin',
     role: 'HR',
-    employeeId: 'HR001',
+    employeeId: 'EMP005',
     department: 'Human Resources',
   };
 

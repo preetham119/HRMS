@@ -22,6 +22,7 @@ model Company {
   profiles    EmployeeProfile[]
   documents   DocumentRecord[]
   leaveRequests LeaveRequest[]
+  subscription CompanySubscription?
 }
 
 model Membership {
@@ -30,7 +31,7 @@ model Membership {
   companyId  String
   email      String
   name       String
-  role       String   @default("EMPLOYEE")
+  role       String   @default("EMPLOYEE_PR")
   employeeId String
   status     String   @default("active")
   createdAt  DateTime @default(now())
@@ -138,4 +139,200 @@ model LeaveRequest {
 
   @@index([companyId, employeeId])
   @@index([companyId, status])
+}
+
+model SubscriptionPlan {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  stripePriceId String @unique
+  stripeProductId String
+  amount      Int
+  currency    String   @default("INR")
+  billingPeriod String   @default("monthly")
+  isActive    Boolean  @default(true)
+  features    String[] @default([])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  subscriptions CompanySubscription[]
+}
+
+model CompanySubscription {
+  id                      String   @id @default(cuid())
+  companyId               String   @unique
+  planId                  String?
+  stripeCustomerId        String?  @unique
+  stripeSubscriptionId    String?  @unique
+  stripePriceId           String?
+  status                  String   @default("TRIALING")
+  trialStartDate          DateTime @default(now())
+  trialEndDate            DateTime
+  currentPeriodStart      DateTime?
+  currentPeriodEnd        DateTime?
+  cancelAtPeriodEnd       Boolean  @default(false)
+  canceledAt              DateTime?
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  plan    SubscriptionPlan? @relation(fields: [planId], references: [id], onDelete: SetNull)
+
+  invoices SubscriptionInvoice[]
+
+  @@index([companyId])
+  @@index([status])
+  @@index([stripeCustomerId])
+}
+
+model SubscriptionInvoice {
+  id                    String   @id @default(cuid())
+  subscriptionId        String
+  stripeInvoiceId       String?  @unique
+  amount                Int
+  currency              String   @default("INR")
+  status                String   @default("draft")
+  periodStartDate       DateTime?
+  periodEndDate         DateTime?
+  dueDate               DateTime?
+  paidDate              DateTime?
+  pdfUrl                String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  subscription CompanySubscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  @@index([subscriptionId])
+  @@index([stripeInvoiceId])
+  @@index([status])
+}
+
+/// Asset Management — organization inventory (no seed assets; created by HR/Admin)
+model AssetCategory {
+  id          String   @id @default(cuid())
+  companyId   String
+  code        String
+  name        String
+  icon        String   @default("Package")
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  assets Asset[]
+
+  @@unique([companyId, code])
+  @@index([companyId])
+}
+
+model Asset {
+  id                String    @id @default(cuid())
+  companyId         String
+  categoryId        String
+  name              String
+  assetTag          String
+  serialNumber      String    @default("")
+  brand             String    @default("")
+  model             String    @default("")
+  status            String    @default("Available")
+  condition         String    @default("Good")
+  purchaseDate      DateTime?
+  warrantyExpiry    DateTime?
+  notes             String    @default("")
+  assignedEmployeeId String?
+  assignedEmployeeName String?
+  assignedDate      DateTime?
+  expectedReturnDate DateTime?
+  createdBy         String
+  updatedBy         String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  category     AssetCategory      @relation(fields: [categoryId], references: [id])
+  assignments  AssetAssignment[]
+  history      AssetHistory[]
+  maintenance  AssetMaintenance[]
+  documents    AssetDocument[]
+
+  @@unique([companyId, assetTag])
+  @@index([companyId, status])
+  @@index([companyId, assignedEmployeeId])
+  @@index([categoryId])
+}
+
+model AssetAssignment {
+  id              String    @id @default(cuid())
+  companyId       String
+  assetId         String
+  employeeId      String
+  employeeName    String    @default("")
+  assignedAt      DateTime  @default(now())
+  expectedReturn  DateTime?
+  returnedAt      DateTime?
+  assignedBy      String
+  returnedBy      String?
+  notes           String    @default("")
+  isActive        Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  asset Asset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  @@index([companyId, employeeId])
+  @@index([assetId, isActive])
+}
+
+model AssetHistory {
+  id          String   @id @default(cuid())
+  companyId   String
+  assetId     String
+  action      String
+  fromStatus  String?
+  toStatus    String?
+  employeeId  String?
+  actorId     String
+  actorName   String
+  details     String   @default("")
+  createdAt   DateTime @default(now())
+
+  asset Asset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  @@index([assetId, createdAt])
+  @@index([companyId])
+}
+
+model AssetMaintenance {
+  id            String    @id @default(cuid())
+  companyId     String
+  assetId       String
+  title         String
+  description   String    @default("")
+  status        String    @default("Open")
+  startedAt     DateTime  @default(now())
+  completedAt   DateTime?
+  cost          Decimal?  @default(0)
+  vendor        String    @default("")
+  createdBy     String
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  asset Asset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  @@index([assetId])
+  @@index([companyId])
+}
+
+model AssetDocument {
+  id          String   @id @default(cuid())
+  companyId   String
+  assetId     String
+  name        String
+  storagePath String
+  mimeType    String?
+  sizeInBytes Int?
+  uploadedBy  String
+  createdAt   DateTime @default(now())
+
+  asset Asset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  @@index([assetId])
 }

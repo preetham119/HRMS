@@ -3,24 +3,10 @@
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { CalendarRange, FileText, GraduationCap, HelpCircle, Settings, Sparkles, UserCircle2, Wallet2 } from 'lucide-react';
-import { Suspense, useMemo } from 'react';
+import { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { useAuth } from '@/components/providers/auth-provider';
 import HeroDashboard from '@/components/dashboard/HeroDashboard';
-
-const employee = {
-  name: 'Rajesh Kumar',
-  employeeId: 'EMP00125',
-  designation: 'Senior QA Lead',
-  department: 'Quality Assurance',
-  manager: 'John Smith',
-  managerEmail: 'john.smith@Rockstar.com',
-  location: 'Hyderabad, India',
-  employmentType: 'Full Time',
-  joiningDate: '12-Jan-2024',
-  status: 'Active',
-  leaveBalance: { annual: 18, casual: 7, sick: 5, compOff: 3, lop: 0 },
-};
+import { useCurrentProfile } from '@/hooks/use-current-profile';
 
 const quickLinks = [
   { title: 'My Profile', href: '/profile' as const, icon: UserCircle2, description: 'Manage personal and professional details', color: 'from-brand-500 to-brand-700' },
@@ -33,27 +19,22 @@ const quickLinks = [
   { title: 'Settings', href: '/settings' as const, icon: Settings, description: 'Update preferences and notifications', color: 'from-lime-500 to-lime-700' },
 ];
 
-function getGreeting() {
-  const hour = new Date().getHours();
-  if (hour < 12) return 'Good Morning';
-  if (hour < 18) return 'Good Afternoon';
-  return 'Good Evening';
-}
-
 function DashboardContent() {
-  const greeting = useMemo(() => getGreeting(), []);
-  const { user } = useAuth();
   const searchParams = useSearchParams();
   const isUnauthorized = searchParams.get('unauthorized') === '1';
-
-  // lightweight dashboard data saved previously
-  if (typeof window !== 'undefined') {
-    try {
-      window.localStorage.setItem('dashboardData', JSON.stringify({ reportingEmail: employee.managerEmail }));
-    } catch (e) {
-      // ignore
-    }
-  }
+  const {
+    employeeId,
+    name,
+    firstName,
+    email,
+    designation,
+    department,
+    manager,
+    status,
+    location,
+    profilePicture,
+    isLoading,
+  } = useCurrentProfile();
 
   return (
     <div className="min-h-screen bg-slate-50 p-4 sm:p-6 lg:p-8 dark:bg-slate-950">
@@ -63,15 +44,23 @@ function DashboardContent() {
             Unauthorized Access
           </div>
         ) : null}
-        {/* Replaced old hero with premium HeroDashboard */}
-        <HeroDashboard
-          employeeId={employee.employeeId}
-          name={user?.email ? user.email.split('@')[0] : employee.name}
-          designation={employee.designation}
-          department={employee.department}
-          location={employee.location}
-          lastLogin={undefined}
-        />
+
+        {isLoading && !employeeId ? (
+          <div className="h-[280px] animate-pulse rounded-[24px] bg-slate-200 dark:bg-slate-800" />
+        ) : (
+          <HeroDashboard
+            employeeId={employeeId}
+            name={name || firstName}
+            designation={designation}
+            department={department}
+            manager={manager}
+            officialEmail={email}
+            status={status}
+            location={location || '—'}
+            photoUrl={profilePicture}
+            lastLogin={undefined}
+          />
+        )}
 
         <section>
           <div className="mb-4 flex items-center justify-between">
@@ -104,6 +93,7 @@ function DashboardContent() {
             })}
           </div>
         </section>
+
       </div>
     </div>
   );
@@ -111,7 +101,7 @@ function DashboardContent() {
 
 export default function DashboardPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-slate-50 p-4 sm:p-6 lg:p-8 dark:bg-slate-950" />}> 
+    <Suspense fallback={<div className="min-h-screen bg-slate-50 p-4 sm:p-6 lg:p-8 dark:bg-slate-950" />}>
       <DashboardContent />
     </Suspense>
   );

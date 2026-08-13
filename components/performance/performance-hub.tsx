@@ -10,7 +10,7 @@ import { ManagerPerformance } from './manager-performance';
 
 const subtitles = {
   employee: 'Track your goals and complete your self appraisal.',
-  manager: 'Review your team\'s submitted appraisals.',
+  manager: 'Complete your self appraisal and review your team\'s submitted appraisals.',
   hr: 'Manage appraisal cycles and view organisation progress.',
   admin: 'Provide the administrative review and recommendations.',
   leadership: 'Make final leadership decisions for appraisals.',

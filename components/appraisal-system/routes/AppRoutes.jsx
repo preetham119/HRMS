@@ -60,6 +60,10 @@ export default function AppRoutes() {
         <Route path="/manager" element={<EmbeddedLayout menuItems={managerMenu} title="Performance" />}>
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<ManagerDashboard />} />
+          <Route path="goals" element={<MyGoals />} />
+          <Route path="self-appraisal" element={<SelfAppraisal />} />
+          <Route path="appraisal-history" element={<AppraisalHistory />} />
+          <Route path="feedback" element={<Feedback />} />
           <Route path="team" element={<TeamMembers />} />
           <Route path="pending-reviews" element={<PendingReviews />} />
           <Route path="completed-reviews" element={<CompletedReviews />} />

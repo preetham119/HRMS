@@ -13,7 +13,8 @@ export function toAppraisalPersona(role: AppRole | null | undefined) {
     case 'CEO':
       return 'leadership' as const;
     case 'FINANCE':
-    case 'EMPLOYEE':
+    case 'EMPLOYEE_PR':
+    case 'EMPLOYEE_CONT':
     default:
       return 'employee' as const;
   }

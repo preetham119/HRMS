@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server';
+import { isMockAuthEnabled } from '@/lib/auth/mock-mode';
+import { getMockProfile, updateMockProfile } from '@/lib/auth/mock-profile-store';
 import { AuthError, requireMembership, requirePrisma } from '@/lib/auth/session';
 
 function formatProfile(profile: {
@@ -21,6 +23,7 @@ function formatProfile(profile: {
   state: string | null;
   country: string | null;
   pincode: string | null;
+  profilePicture?: string | null;
 }) {
   const parts = profile.fullName.split(' ').filter(Boolean);
   return {
@@ -65,7 +68,7 @@ function formatProfile(profile: {
     designation: profile.designation,
     manager: profile.manager,
     joiningDate: profile.joiningDate.toISOString().slice(0, 10),
-    profilePicture: undefined,
+    profilePicture: profile.profilePicture ?? undefined,
     location: profile.location,
     employmentType: profile.employmentType,
     status: profile.status,
@@ -75,6 +78,15 @@ function formatProfile(profile: {
 export async function GET() {
   try {
     const membership = await requireMembership();
+
+    if (isMockAuthEnabled()) {
+      const profile = getMockProfile(membership.employeeId);
+      if (!profile) {
+        return NextResponse.json({ error: 'Profile not found' }, { status: 404 });
+      }
+      return NextResponse.json(formatProfile(profile));
+    }
+
     const db = requirePrisma();
     const profile = await db.employeeProfile.findUnique({
       where: {
@@ -103,7 +115,6 @@ export async function PATCH(request: Request) {
   try {
     const membership = await requireMembership();
     const body = await request.json();
-    const db = requirePrisma();
 
     const fullName =
       [body.firstName, body.middleName, body.lastName].filter(Boolean).join(' ').trim() ||
@@ -115,6 +126,21 @@ export async function PATCH(request: Request) {
     const permanentAddress =
       body.permanentAddress ||
       [body.permanentAddressLine1, body.permanentAddressLine2].filter(Boolean).join(', ');
+
+    if (isMockAuthEnabled()) {
+      const profile = updateMockProfile(membership.employeeId, {
+        ...body,
+        fullName,
+        currentAddress,
+        permanentAddress,
+      });
+      if (!profile) {
+        return NextResponse.json({ error: 'Profile not found' }, { status: 404 });
+      }
+      return NextResponse.json(formatProfile(profile));
+    }
+
+    const db = requirePrisma();
 
     const profile = await db.employeeProfile.update({
       where: {

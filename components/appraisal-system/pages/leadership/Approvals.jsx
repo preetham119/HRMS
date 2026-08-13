@@ -84,9 +84,12 @@ export default function LeadershipApprovals() {
             render: (r) => (r.manager_rating != null ? Number(r.manager_rating).toFixed(1) : '—'),
           },
           {
-            id: 'hr_rating',
-            label: 'HR',
-            render: (r) => (r.hr_rating != null ? Number(r.hr_rating).toFixed(1) : '—'),
+            id: 'admin_rating',
+            label: 'Admin',
+            render: (r) => {
+              const rating = r.admin_rating ?? r.hr_rating;
+              return rating != null ? Number(rating).toFixed(1) : '—';
+            },
           },
           { id: 'status', label: 'Status', render: (r) => <StatusChip status={r.status} /> },
           {

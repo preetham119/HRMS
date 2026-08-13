@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { findMockUserById } from '@/lib/auth/mock-users';
 import { getCurrentMembership } from '@/lib/auth/session';
 
 export async function GET() {
@@ -6,6 +7,8 @@ export async function GET() {
   if (!membership) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+
+  const mockUser = findMockUserById(membership.membershipId);
 
   return NextResponse.json({
     id: membership.membershipId,
@@ -15,5 +18,7 @@ export async function GET() {
     employeeId: membership.employeeId,
     companyId: membership.companyId,
     companyName: membership.companyName,
+    department: membership.department ?? mockUser?.department,
+    profilePicture: membership.profilePicture ?? null,
   });
 }

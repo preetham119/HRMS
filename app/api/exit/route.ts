@@ -32,20 +32,24 @@ function getActor(request: NextRequest): ExitActor | null {
     employeeId:
       employeeIdFromHeader ||
       (role === 'HR'
-        ? 'HR001'
+        ? 'EMP005'
         : role === 'MANAGER'
-          ? 'MGR001'
+          ? 'EMP004'
           : role === 'FINANCE'
-            ? 'FIN001'
+            ? 'EMP006'
             : role === 'ADMIN'
-              ? 'ADM001'
-              : 'EMP001'),
+              ? 'EMP007'
+              : role === 'CEO'
+                ? 'EMP008'
+                : role === 'EMPLOYEE_CONT'
+                  ? 'EMP002'
+                  : 'EMP001'),
   };
 }
 
 function actorFromBodyFallback(body: Record<string, unknown>, cookieActor: ExitActor | null): ExitActor | null {
   if (cookieActor) return cookieActor;
-  const role = normalizeAppRole(String(body.actorRole ?? 'EMPLOYEE'));
+  const role = normalizeAppRole(String(body.actorRole ?? 'EMPLOYEE_PR'));
   const email = String(body.actorEmail ?? '');
   const id = String(body.actorId ?? '');
   const employeeId = String(body.actorEmployeeId ?? '');

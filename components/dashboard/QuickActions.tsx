@@ -1,6 +1,7 @@
 'use client';
 
 import { FC } from 'react';
+import Link from 'next/link';
 import { Calendar, Upload, FileText } from 'lucide-react';
 
 type ActionItem = {
@@ -17,20 +18,20 @@ const QuickActions: FC = () => {
   ];
 
   return (
-    <div className="flex gap-4 justify-start max-w-3xl mx-auto">
-      {actions.map((a) => {
-        const Icon = a.icon;
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
+      {actions.map((action) => {
+        const Icon = action.icon;
         return (
-          <a
-            key={a.title}
-            href={a.href}
-            className="flex-1 min-w-[0] rounded-[14px] h-[52px] bg-white text-slate-800 flex items-center gap-3 justify-center transition transform hover:-translate-y-1 hover:shadow-lg"
+          <Link
+            key={action.title}
+            href={action.href as any}
+            className="flex h-12 items-center justify-center gap-3 rounded-2xl bg-white px-4 text-slate-800 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
           >
-            <span className="inline-flex items-center justify-center rounded-md bg-blue-50 p-2">
-              <Icon className="h-5 w-5 text-[#2563EB]" />
+            <span className="inline-flex items-center justify-center rounded-lg bg-blue-50 p-2">
+              <Icon className="h-4 w-4 text-[#2563EB]" />
             </span>
-            <span className="font-semibold text-[16px]">{a.title}</span>
-          </a>
+            <span className="text-sm font-semibold sm:text-[15px]">{action.title}</span>
+          </Link>
         );
       })}
     </div>

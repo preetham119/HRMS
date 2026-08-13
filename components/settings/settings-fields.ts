@@ -88,7 +88,7 @@ export const SETTINGS_MODULE_CONFIGS: Record<string, SettingsModuleConfig> = {
     slug: 'user-roles',
     initialStatus: 'Configured',
     defaults: {
-      defaultRole: 'EMPLOYEE',
+      defaultRole: 'EMPLOYEE_PR',
       allowSelfSignup: false,
       requireManagerAssignment: true,
       sessionIdleMinutes: 30,
@@ -98,14 +98,15 @@ export const SETTINGS_MODULE_CONFIGS: Record<string, SettingsModuleConfig> = {
     sections: [
       {
         title: 'Access defaults',
-        description: 'Roles are extracted from the live HRMS auth catalog (EMPLOYEE, MANAGER, HR, FINANCE, ADMIN, CEO).',
+        description: 'Roles are extracted from the live HRMS auth catalog (EMPLOYEE_PR, EMPLOYEE_CONT, MANAGER, HR, FINANCE, ADMIN, CEO).',
         fields: [
           {
             key: 'defaultRole',
             label: 'Default role for new users',
             type: 'select',
             options: [
-              { label: 'Employee', value: 'EMPLOYEE' },
+              { label: 'Employee-PR', value: 'EMPLOYEE_PR' },
+              { label: 'Employee-CONT', value: 'EMPLOYEE_CONT' },
               { label: 'Manager', value: 'MANAGER' },
               { label: 'HR', value: 'HR' },
               { label: 'Finance', value: 'FINANCE' },

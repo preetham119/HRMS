@@ -17,7 +17,7 @@ import type {
 } from '@/lib/appraisal/types';
 
 /** Bump when demo seed / workflow contract changes so browsers reload fresh state. */
-const STORAGE_KEY = 'hrms-appraisal-store-v6';
+const STORAGE_KEY = 'hrms-appraisal-store-v7';
 
 function cloneState(): AppraisalStoreState {
   return structuredClone(createInitialAppraisalState());
@@ -30,7 +30,10 @@ function normalizeState(state: AppraisalStoreState): AppraisalStoreState {
     managerReviews: state.managerReviews || [],
     adminReviews: state.adminReviews || [],
     leadershipReviews: state.leadershipReviews || [],
-    appraisals: state.appraisals || [],
+    appraisals: (state.appraisals || []).map((appraisal) => ({
+      ...appraisal,
+      documents: Array.isArray(appraisal.documents) ? appraisal.documents : [],
+    })),
     goals: state.goals || [],
     cycles: state.cycles || [],
     competencies: state.competencies || [],
@@ -185,6 +188,7 @@ export function openAppraisalCycle(
         selfRating: null,
         competencyRatings: [],
         goalRatings: [],
+        documents: [],
         status: 'draft',
         updatedAt: now,
       });
@@ -216,17 +220,11 @@ export function openAppraisalCycle(
         emp.employeeId,
         'Appraisal cycle opened',
         `${openCycle.name} is now open. Please complete and submit your self-appraisal.`,
-        '/employee/self-appraisal',
+        selfAppraisalLink(emp.employeeId),
       ),
     ),
     makeNotification(
-      'MGR001',
-      'Appraisal cycle opened',
-      `${openCycle.name} is open. Team self-appraisals will appear in your pending queue after employees submit.`,
-      '/manager/pending-reviews',
-    ),
-    makeNotification(
-      'HR001',
+      'EMP005',
       'Cycle opened',
       `${openCycle.name} is open. Track status in Reports as reviews move Employee → Manager → Admin → CEO.`,
       '/hr/reports',
@@ -235,6 +233,10 @@ export function openAppraisalCycle(
 
   state = writeStore(pushNotifications({ ...state, cycles, appraisals, goals }, notes));
   return state;
+}
+
+function selfAppraisalLink(employeeId: string) {
+  return employeeId === 'EMP004' ? '/manager/self-appraisal' : '/employee/self-appraisal';
 }
 
 export function getOrCreateSelfAppraisal(actor: AppraisalActor, state = readStore()) {
@@ -249,7 +251,15 @@ export function getOrCreateSelfAppraisal(actor: AppraisalActor, state = readStor
   );
 
   const role = String(actor.role || '').toUpperCase();
-  const canSelfAppraise = role === 'EMPLOYEE' || role === 'FINANCE' || role === '';
+  const canSelfAppraise =
+    role === 'EMPLOYEE_PR' ||
+    role === 'EMPLOYEE_CONT' ||
+    role === 'EMPLOYEE' ||
+    role === 'MANAGER' ||
+    role === 'ADMIN' ||
+    role === 'CEO' ||
+    role === 'FINANCE' ||
+    role === '';
 
   if (!appraisal && canSelfAppraise) {
     const demo = DEMO_EMPLOYEES.find((item) => item.employeeId === employeeId);
@@ -259,8 +269,10 @@ export function getOrCreateSelfAppraisal(actor: AppraisalActor, state = readStor
       employeeName: actor.name || demo?.employeeName || 'Employee',
       employeeEmail: actor.email || demo?.employeeEmail || '',
       department: actor.department || demo?.department || 'General',
-      designation: demo?.designation || (role === 'FINANCE' ? 'Finance Associate' : 'Employee'),
-      managerId: demo?.managerId || 'MGR001',
+      designation:
+        demo?.designation
+        || (role === 'MANAGER' ? 'Engineering Manager' : role === 'FINANCE' ? 'Finance Associate' : 'Employee'),
+      managerId: demo?.managerId || (role === 'MANAGER' ? 'EMP008' : 'EMP004'),
       cycleId: cycle.id,
       achievements: '',
       challenges: '',
@@ -268,10 +280,16 @@ export function getOrCreateSelfAppraisal(actor: AppraisalActor, state = readStor
       selfRating: null,
       competencyRatings: [],
       goalRatings: [],
+      documents: [],
       status: 'draft',
       updatedAt: new Date().toISOString(),
     };
     state = writeStore({ ...state, appraisals: [...state.appraisals, appraisal] });
+  }
+
+  // Backfill documents for appraisals created before this field existed.
+  if (appraisal && !Array.isArray(appraisal.documents)) {
+    appraisal.documents = [];
   }
 
   return { state, appraisal: appraisal ?? null };
@@ -286,6 +304,7 @@ export function saveSelfAppraisal(
     selfRating: number | null;
     competencyRatings: ScoreEntry[];
     goalRatings: ScoreEntry[];
+    documents?: SelfAppraisal['documents'];
     submit?: boolean;
   },
 ) {
@@ -312,6 +331,7 @@ export function saveSelfAppraisal(
     selfRating: payload.selfRating,
     competencyRatings: payload.competencyRatings,
     goalRatings: payload.goalRatings,
+    documents: payload.documents ?? appraisal.documents ?? [],
     status: payload.submit
       ? 'under_manager_review'
       : appraisal.status === 'returned'
@@ -334,7 +354,7 @@ export function saveSelfAppraisal(
         '/manager/pending-reviews',
       ),
       makeNotification(
-        'HR001',
+        'EMP005',
         'Self-appraisal submitted',
         `${next.employeeName} submitted self-appraisal. Status: Manager Review.`,
         '/hr/reports',
@@ -411,13 +431,13 @@ export function saveManagerReview(
   if (payload.submit) {
     state = pushNotifications(state, [
       makeNotification(
-        'ADM001',
+        'EMP007',
         'Manager review submitted',
         `${appraisal.employeeName}'s appraisal is ready for admin review.`,
         '/admin/approvals',
       ),
       makeNotification(
-        'HR001',
+        'EMP005',
         'Moved to Admin Review',
         `${appraisal.employeeName}: Manager review complete → Admin Review.`,
         '/hr/reports',
@@ -469,6 +489,7 @@ export function saveAdminReview(
     training: payload.training,
     highPotential: payload.highPotential,
     finalRating: payload.finalRating,
+    competencyRatings: payload.competencyRatings || [],
     status: payload.submit ? 'submitted' : 'draft',
     submittedAt: payload.submit ? new Date().toISOString() : undefined,
   };
@@ -486,13 +507,13 @@ export function saveAdminReview(
   if (payload.submit) {
     state = pushNotifications(state, [
       makeNotification(
-        'CEO001',
+        'EMP008',
         'Admin review submitted',
         `${appraisal.employeeName}'s appraisal is ready for leadership approval.`,
         '/leadership/approvals',
       ),
       makeNotification(
-        'HR001',
+        'EMP005',
         'Moved to Leadership Review',
         `${appraisal.employeeName}: Admin review complete → CEO / Leadership.`,
         '/hr/reports',
@@ -530,6 +551,7 @@ export function saveLeadershipReview(
     training: payload.training,
     highPotential: payload.highPotential,
     finalRating: payload.finalRating,
+    competencyRatings: payload.competencyRatings || [],
     status: payload.submit ? 'submitted' : 'draft',
     submittedAt: payload.submit ? new Date().toISOString() : undefined,
   };
@@ -547,7 +569,7 @@ export function saveLeadershipReview(
   if (payload.submit) {
     state = pushNotifications(state, [
       makeNotification(
-        'HR001',
+        'EMP005',
         'Appraisal completed',
         `${appraisal.employeeName}'s appraisal is fully completed by Leadership. View status in Reports.`,
         '/hr/reports',

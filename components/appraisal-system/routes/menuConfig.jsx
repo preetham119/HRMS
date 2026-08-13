@@ -21,6 +21,9 @@ export const employeeMenu = [
 
 export const managerMenu = [
   { label: 'Dashboard', path: '/manager/dashboard', icon: <DashboardIcon /> },
+  { label: 'My Goals', path: '/manager/goals', icon: <FlagIcon /> },
+  { label: 'Self Appraisal', path: '/manager/self-appraisal', icon: <AssignmentIcon /> },
+  { label: 'Appraisal History', path: '/manager/appraisal-history', icon: <HistoryIcon /> },
   { label: 'Team Members', path: '/manager/team', icon: <GroupsIcon /> },
   { label: 'Pending Reviews', path: '/manager/pending-reviews', icon: <RateReviewIcon /> },
   { label: 'Completed Reviews', path: '/manager/completed-reviews', icon: <DoneAllIcon /> },

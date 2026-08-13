@@ -10,6 +10,7 @@ import { ExitTimeline } from '@/components/exit/exit-timeline';
 import { ExitStatusBadge } from '@/components/exit/status-badge';
 import { AuditLogList } from '@/components/exit/audit-log-list';
 import { ExitNotifications } from '@/components/exit/exit-notifications';
+import { isEmployeeRole } from '@/lib/auth';
 import {
   canApproveAsHr,
   canApproveAsManager,
@@ -98,7 +99,7 @@ export function ResignationPageView() {
   );
 
   const queue = useMemo(() => {
-    if (!role || role === 'EMPLOYEE') return [];
+    if (!role || isEmployeeRole(role)) return [];
     return cases.filter((item) => item.employeeId !== user?.employeeId || ['MANAGER', 'HR', 'ADMIN', 'FINANCE'].includes(role));
   }, [cases, role, user?.employeeId]);
 
@@ -311,7 +312,7 @@ export function ResignationPageView() {
           </div>
 
           {!locked &&
-            (role === 'EMPLOYEE' || role === 'MANAGER' || role === 'ADMIN') &&
+            (isEmployeeRole(role) || role === 'MANAGER' || role === 'ADMIN') &&
             (!exitCase || exitCase.employeeId === user?.employeeId) && (
             <div className="mt-6 flex flex-wrap gap-3">
               <button

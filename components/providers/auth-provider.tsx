@@ -1,8 +1,16 @@
 'use client';
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import {
+  AUTH_COOKIE_NAME,
+  clearAuthCookie,
+  decodeJwtToken,
+  normalizeAppRole,
+  setAuthCookie,
+  type AppRole,
+} from '@/lib/auth';
+import { isMockAuthEnabled } from '@/lib/auth/mock-mode';
 import { createClient } from '@/lib/supabase/client';
-import { normalizeAppRole, type AppRole } from '@/lib/auth';
 
 export interface UserProfile {
   id: string;
@@ -29,6 +37,12 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
+function readAuthCookie() {
+  if (typeof document === 'undefined') return null;
+  const match = document.cookie.match(new RegExp(`(?:^|; )${AUTH_COOKIE_NAME}=([^;]*)`));
+  return match ? decodeURIComponent(match[1]) : null;
+}
+
 async function fetchMembershipUser(): Promise<UserProfile | null> {
   const response = await fetch('/api/me', { credentials: 'include' });
   if (response.status === 401) {
@@ -46,8 +60,8 @@ async function fetchMembershipUser(): Promise<UserProfile | null> {
     name: data.name,
     companyId: data.companyId,
     companyName: data.companyName,
-    department: undefined,
-    profilePicture: null,
+    department: data.department,
+    profilePicture: data.profilePicture ?? null,
   };
 }
 
@@ -55,9 +69,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isReady, setIsReady] = useState(false);
-  const supabase = useMemo(() => createClient(), []);
+  const useMockAuth = isMockAuthEnabled();
+  const supabase = useMemo(() => (useMockAuth ? null : createClient()), [useMockAuth]);
 
   const refreshUser = useCallback(async () => {
+    if (useMockAuth) {
+      const cookieToken = readAuthCookie();
+      const payload = decodeJwtToken(cookieToken);
+      if (!cookieToken || !payload || payload.exp * 1000 < Date.now()) {
+        setUser(null);
+        setToken(null);
+        return;
+      }
+
+      const membershipUser = await fetchMembershipUser();
+      if (!membershipUser) {
+        clearAuthCookie();
+        setUser(null);
+        setToken(null);
+        return;
+      }
+
+      setToken(cookieToken);
+      setUser(membershipUser);
+      return;
+    }
+
+    if (!supabase) return;
+
     const {
       data: { session },
     } = await supabase.auth.getSession();
@@ -71,7 +110,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setToken(session.access_token);
     const membershipUser = await fetchMembershipUser();
     setUser(membershipUser);
-  }, [supabase]);
+  }, [supabase, useMockAuth]);
 
   useEffect(() => {
     let mounted = true;
@@ -87,6 +126,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (mounted) setIsReady(true);
       }
     })();
+
+    if (!supabase) {
+      return () => {
+        mounted = false;
+      };
+    }
 
     const {
       data: { subscription },
@@ -121,6 +166,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw new Error('Email and password are required');
       }
 
+      if (useMockAuth) {
+        const response = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({
+            email: email.trim().toLowerCase(),
+            password,
+          }),
+        });
+
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(data.error || 'Invalid credentials');
+        }
+
+        setAuthCookie(data.token);
+        setToken(data.token);
+        setUser({
+          id: data.user.id,
+          email: data.user.email,
+          role: normalizeAppRole(data.user.role),
+          employeeId: data.user.employeeId,
+          name: data.user.name,
+          department: data.user.department,
+          companyId: data.user.companyId,
+          companyName: data.user.companyName,
+          profilePicture: data.user.profilePicture ?? null,
+        });
+        return;
+      }
+
+      if (!supabase) {
+        throw new Error('Auth is not configured');
+      }
+
       const { error } = await supabase.auth.signInWithPassword({
         email: email.trim().toLowerCase(),
         password,
@@ -142,14 +223,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setToken(session?.access_token ?? null);
       setUser(membershipUser);
     },
-    [supabase],
+    [supabase, useMockAuth],
   );
 
   const logout = useCallback(async () => {
-    await supabase.auth.signOut();
+    if (useMockAuth) {
+      clearAuthCookie();
+      await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }).catch(() => undefined);
+      setToken(null);
+      setUser(null);
+      return;
+    }
+
+    if (supabase) {
+      await supabase.auth.signOut();
+    }
     setToken(null);
     setUser(null);
-  }, [supabase]);
+  }, [supabase, useMockAuth]);
 
   const value = useMemo<AuthContextValue>(
     () => ({

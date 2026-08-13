@@ -68,7 +68,10 @@ export function FullFinalPageView() {
   const enabled = stageAccess.fullAndFinal === 'enabled';
   const completed = stageAccess.fullAndFinal === 'completed' || exitCase?.fullAndFinal?.status === 'Completed';
   const canEdit = canProcessFullAndFinal(user?.role, exitCase) && enabled && !completed;
-  const isEmployeeView = user?.role === 'EMPLOYEE' || user?.role === 'MANAGER';
+  const isEmployeeView =
+    user?.role === 'EMPLOYEE_PR' ||
+    user?.role === 'EMPLOYEE_CONT' ||
+    user?.role === 'MANAGER';
 
   return (
     <div className="mx-auto flex max-w-7xl flex-col gap-6">

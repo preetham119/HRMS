@@ -1,4 +1,5 @@
 import type { AppRole } from '@/lib/auth';
+import { EMPLOYEE_ROLES } from '@/lib/auth';
 import { canRoleAccessSettings, isPerformanceHubEnabled } from '@/lib/settings/registry';
 
 export interface NavItem {
@@ -10,7 +11,20 @@ export interface NavItem {
 }
 
 /** Roles that use the standard employee/HR navigation tree. */
-const STAFF_ROLES: AppRole[] = ['EMPLOYEE', 'MANAGER', 'HR', 'FINANCE'];
+const STAFF_ROLES: AppRole[] = [...EMPLOYEE_ROLES, 'MANAGER', 'HR', 'FINANCE'];
+
+function exitManagementSection(roles: AppRole[]): NavItem {
+  return {
+    label: 'Exit Management',
+    icon: 'DoorOpen',
+    roles,
+    children: [
+      { href: '/exit/resignation', label: 'Resignation', icon: 'FilePenLine', roles },
+      { href: '/exit/exit-interview', label: 'Exit Interview', icon: 'MessagesSquare', roles },
+      { href: '/exit/full-final', label: 'Full & Final', icon: 'BadgeIndianRupee', roles },
+    ],
+  };
+}
 
 export const employeeMenu: NavItem[] = [
   { href: '/dashboard', label: 'Dashboard', icon: 'LayoutGrid', roles: STAFF_ROLES },
@@ -21,6 +35,7 @@ export const employeeMenu: NavItem[] = [
   { href: '/payroll', label: 'Payroll', icon: 'Wallet2', roles: STAFF_ROLES },
   { href: '/performance', label: 'Performance', icon: 'Sparkles', roles: STAFF_ROLES },
   { href: '/documents', label: 'Documents', icon: 'FileText', roles: STAFF_ROLES },
+  { href: '/assets', label: 'Asset Management', icon: 'Package', roles: STAFF_ROLES },
   {
     label: 'Learning',
     icon: 'GraduationCap',
@@ -49,17 +64,8 @@ export const employeeMenu: NavItem[] = [
   },
   { href: '/settings', label: 'Settings', icon: 'Settings', roles: STAFF_ROLES },
   { href: '/settings/team', label: 'Team', icon: 'Users', roles: ['HR', 'ADMIN'] },
+  exitManagementSection(STAFF_ROLES),
   { href: '/newsletter', label: 'Newsletter', icon: 'MailPlus', roles: STAFF_ROLES },
-  {
-    label: 'Exit Management',
-    icon: 'DoorOpen',
-    roles: STAFF_ROLES,
-    children: [
-      { href: '/exit/resignation', label: 'Resignation', icon: 'FilePenLine', roles: STAFF_ROLES },
-      { href: '/exit/exit-interview', label: 'Exit Interview', icon: 'MessagesSquare', roles: STAFF_ROLES },
-      { href: '/exit/full-final', label: 'Full & Final', icon: 'BadgeIndianRupee', roles: STAFF_ROLES },
-    ],
-  },
 ];
 
 export const hrMenuExtras: NavItem[] = [
@@ -74,6 +80,8 @@ export const ceoMenu: NavItem[] = [
   { href: '/my-org', label: 'My Org', icon: 'Building2', roles: ['CEO'] },
   { href: '/finance', label: 'Finance', icon: 'Wallet2', roles: ['CEO'] },
   { href: '/performance', label: 'Performance', icon: 'Sparkles', roles: ['CEO'] },
+  exitManagementSection(['CEO']),
+  { href: '/assets', label: 'Asset Management', icon: 'Package', roles: ['CEO'] },
   {
     label: 'IT Service Desk',
     icon: 'HelpCircle',
@@ -93,8 +101,10 @@ export const adminMenu: NavItem[] = [
   { href: '/dashboard', label: 'Dashboard', icon: 'LayoutGrid', roles: ['ADMIN'] },
   { href: '/profile', label: 'My Profile', icon: 'UserCircle2', roles: ['ADMIN'] },
   { href: '/documents', label: 'Documents', icon: 'FileText', roles: ['ADMIN'] },
+  { href: '/assets', label: 'Asset Management', icon: 'Package', roles: ['ADMIN'] },
   { href: '/payroll', label: 'Payroll', icon: 'Wallet2', roles: ['ADMIN'] },
   { href: '/performance', label: 'Performance', icon: 'Sparkles', roles: ['ADMIN'] },
+  exitManagementSection(['ADMIN']),
   { href: '/settings', label: 'Settings', icon: 'Settings', roles: ['ADMIN'] },
   { href: '/settings/team', label: 'Team', icon: 'Users', roles: ['ADMIN'] },
   {
@@ -124,7 +134,7 @@ function filterMenu(items: NavItem[], role: AppRole): NavItem[] {
 }
 
 export function getMenuForRole(role: AppRole | null | undefined) {
-  const resolved: AppRole = role ?? 'EMPLOYEE';
+  const resolved: AppRole = role ?? 'EMPLOYEE_PR';
 
   // Dedicated CEO navigation — mirrors HR's role-specific menu composition.
   if (resolved === 'CEO') {
@@ -138,9 +148,9 @@ export function getMenuForRole(role: AppRole | null | undefined) {
 
   const base = filterMenu(employeeMenu, resolved);
 
-  // Keep Newsletter + Exit Management as the final items for HR.
+  // Keep Exit Management + Newsletter as the final items for HR.
   if (resolved === 'HR') {
-    const trailingLabels = new Set(['Newsletter', 'Exit Management']);
+    const trailingLabels = new Set(['Exit Management', 'Newsletter']);
     const primary = base.filter((item) => !trailingLabels.has(item.label));
     const trailing = base.filter((item) => trailingLabels.has(item.label));
     return applySettingsVisibility(
@@ -179,7 +189,8 @@ export function isAdminRole(role: AppRole | null | undefined) {
 
 /** Centralized portal subtitle branding by role — extend here for new roles. */
 export const PORTAL_BRAND_BY_ROLE: Record<AppRole, string> = {
-  EMPLOYEE: 'Employee Portal',
+  EMPLOYEE_PR: 'Employee-PR Portal',
+  EMPLOYEE_CONT: 'Employee-CONT Portal',
   MANAGER: 'Manager Portal',
   HR: 'HR Portal',
   ADMIN: 'Admin Portal',
@@ -188,6 +199,6 @@ export const PORTAL_BRAND_BY_ROLE: Record<AppRole, string> = {
 };
 
 export function getPortalBrandLabel(role: AppRole | null | undefined) {
-  const resolved: AppRole = role ?? 'EMPLOYEE';
-  return PORTAL_BRAND_BY_ROLE[resolved] ?? PORTAL_BRAND_BY_ROLE.EMPLOYEE;
+  const resolved: AppRole = role ?? 'EMPLOYEE_PR';
+  return PORTAL_BRAND_BY_ROLE[resolved] ?? PORTAL_BRAND_BY_ROLE.EMPLOYEE_PR;
 }

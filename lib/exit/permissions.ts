@@ -1,4 +1,5 @@
 import type { AppRole } from '@/lib/auth';
+import { isEmployeeRole } from '@/lib/auth';
 import type { ExitCase, ExitStage, StageAccess } from '@/lib/exit/types';
 
 export function isApproverRole(role: AppRole | null | undefined) {
@@ -18,7 +19,7 @@ export function canViewExitModule(role: AppRole | null | undefined) {
 }
 
 export function canSubmitResignation(role: AppRole | null | undefined) {
-  return role === 'EMPLOYEE' || role === 'MANAGER' || role === 'ADMIN';
+  return isEmployeeRole(role) || role === 'MANAGER' || role === 'ADMIN';
 }
 
 export function canApproveAsManager(role: AppRole | null | undefined, exitCase: ExitCase | null, actorEmail?: string) {
@@ -38,7 +39,7 @@ export function canApproveAsHr(role: AppRole | null | undefined, exitCase: ExitC
 }
 
 export function canRequestWithdrawal(role: AppRole | null | undefined, exitCase: ExitCase | null, actorEmployeeId?: string) {
-  if (!exitCase || role !== 'EMPLOYEE') return false;
+  if (!exitCase || !isEmployeeRole(role)) return false;
   if (exitCase.employeeId !== actorEmployeeId) return false;
   if (exitCase.withdrawalRequest?.status === 'Pending') return false;
   const beforeFinalApproval = exitCase.status === 'Pending Approval' || exitCase.status === 'Submitted';
@@ -60,7 +61,7 @@ export function canCompleteExitInterview(role: AppRole | null | undefined, exitC
   if (!exitCase) return false;
   if (getStageAccess(exitCase).exitInterview !== 'enabled') return false;
   if (isHrOrAdmin(role)) return true;
-  return role === 'EMPLOYEE' && exitCase.employeeId === actorEmployeeId;
+  return isEmployeeRole(role) && exitCase.employeeId === actorEmployeeId;
 }
 
 export function canProcessFullAndFinal(role: AppRole | null | undefined, exitCase: ExitCase | null) {

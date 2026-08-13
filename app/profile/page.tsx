@@ -71,7 +71,9 @@ export default function ProfilePage() {
 
       setProfile(updated);
       updateUser({
-        name: `${updated.firstName} ${updated.lastName}`,
+        employeeId: updated.employeeId,
+        name: `${updated.firstName} ${updated.lastName}`.trim(),
+        department: updated.department,
         profilePicture: updated.profilePicture ?? profile?.profilePicture ?? null,
       });
     } catch (err) {
@@ -182,24 +184,6 @@ export default function ProfilePage() {
                 <p className="text-sm font-semibold uppercase tracking-[0.3em] text-brand-600">Personal profile</p>
                 <h1 className="mt-2 text-3xl font-semibold text-slate-900">{profile.firstName} {profile.lastName}</h1>
                 <p className="mt-2 text-sm text-slate-500">Review and update your personal contact details securely.</p>
-              </div>
-            </div>
-            <div className="grid gap-3 rounded-[24px] border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600 sm:grid-cols-2">
-              <div>
-                <p className="text-slate-500">Employee ID</p>
-                <p className="font-semibold text-slate-900">{profile.employeeId}</p>
-              </div>
-              <div>
-                <p className="text-slate-500">Official Email</p>
-                <p className="font-semibold text-slate-900 break-words">{profile.officialEmail}</p>
-              </div>
-              <div>
-                <p className="text-slate-500">Designation</p>
-                <p className="font-semibold text-slate-900">{profile.designation}</p>
-              </div>
-              <div>
-                <p className="text-slate-500">Department</p>
-                <p className="font-semibold text-slate-900">{profile.department}</p>
               </div>
             </div>
           </div>

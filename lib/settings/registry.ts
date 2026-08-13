@@ -40,10 +40,11 @@ export function getOrganizationSettings() {
 
 export function getUserRolesSettings() {
   const v = getSettingsValues('user-roles');
-  const defaultRoleRaw = String(v.defaultRole || 'EMPLOYEE').toUpperCase();
-  const defaultRole = (APP_ROLES as string[]).includes(defaultRoleRaw)
-    ? (defaultRoleRaw as AppRole)
-    : 'EMPLOYEE';
+  const defaultRoleRaw = String(v.defaultRole || 'EMPLOYEE_PR').toUpperCase().replace(/-/g, '_');
+  const normalizedDefault = defaultRoleRaw === 'EMPLOYEE' ? 'EMPLOYEE_PR' : defaultRoleRaw;
+  const defaultRole = (APP_ROLES as string[]).includes(normalizedDefault)
+    ? (normalizedDefault as AppRole)
+    : 'EMPLOYEE_PR';
   return {
     defaultRole,
     allowSelfSignup: Boolean(v.allowSelfSignup),

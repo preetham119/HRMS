@@ -49,6 +49,15 @@ export type ScoreEntry = {
   comments?: string;
 };
 
+export type AppraisalDocument = {
+  id: string;
+  original_name: string;
+  file_path: string;
+  mime_type?: string;
+  size?: number;
+  uploaded_at?: string;
+};
+
 export type SelfAppraisal = {
   id: string;
   employeeId: string;
@@ -64,6 +73,8 @@ export type SelfAppraisal = {
   selfRating: number | null;
   competencyRatings: ScoreEntry[];
   goalRatings: ScoreEntry[];
+  /** Proof of achievements uploaded by the employee. */
+  documents: AppraisalDocument[];
   status: AppraisalStatus;
   submittedAt?: string;
   updatedAt: string;
@@ -100,6 +111,8 @@ export type StageReview = {
   training: string;
   highPotential: boolean;
   finalRating: number | null;
+  /** Optional per-competency scores (Admin / Leadership). */
+  competencyRatings?: ScoreEntry[];
   status: ReviewStatus;
   submittedAt?: string;
 };

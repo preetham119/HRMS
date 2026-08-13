@@ -21,24 +21,19 @@ const ProfileAvatar: FC<ProfileAvatarProps> = ({ name, photoUrl }) => {
   const displayName = name ?? user?.name ?? 'Employee';
 
   return (
-    <div className="flex items-center">
-      <div
-        className="relative rounded-full bg-white p-[3px] shadow-md"
-        style={{ width: 90, height: 90 }}
-      >
-        {imageUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={imageUrl}
-            alt={displayName}
-            className="h-full w-full rounded-full object-cover"
-          />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center rounded-full bg-[#0ea5e9] text-white font-semibold text-2xl">
-            {initialsFromName(displayName)}
-          </div>
-        )}
-      </div>
+    <div className="relative h-[88px] w-[88px] shrink-0 rounded-full bg-white p-[3px] shadow-md">
+      {imageUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={imageUrl}
+          alt={displayName}
+          className="h-full w-full rounded-full object-cover"
+        />
+      ) : (
+        <div className="flex h-full w-full items-center justify-center rounded-full bg-[#0ea5e9] text-2xl font-semibold text-white">
+          {initialsFromName(displayName)}
+        </div>
+      )}
     </div>
   );
 };

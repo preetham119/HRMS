@@ -22,7 +22,7 @@ function getGreetingLabel(hour: number) {
   return 'Good Night';
 }
 
-const Greeting: FC<GreetingProps> = ({ name = 'Raj' }) => {
+const Greeting: FC<GreetingProps> = ({ name = '' }) => {
   const [now, setNow] = useState(() => new Date());
 
   useEffect(() => {
@@ -43,14 +43,16 @@ const Greeting: FC<GreetingProps> = ({ name = 'Raj' }) => {
   );
 
   const dailyMessage = motivations[now.getDate() % motivations.length];
+  const firstName = name.trim().split(/\s+/).filter(Boolean)[0] || 'there';
 
   return (
-    <div>
-      <h2 className="text-[30px] font-bold leading-tight">
-        {label}, <span className="font-extrabold">{name.split(' ')[0]}</span> <span className="ml-2">👋</span>
+    <div className="space-y-1.5">
+      <h2 className="text-[26px] font-bold leading-tight tracking-tight sm:text-[28px]">
+        {label}, <span className="font-extrabold">{firstName}</span>{' '}
+        <span aria-hidden>👋</span>
       </h2>
-      <div className="mt-2 text-[16px] text-white/90">{dateText}</div>
-      <div className="mt-2 text-[18px] font-semibold italic tracking-wide text-white/90">{dailyMessage}</div>
+      <p className="text-[15px] text-white/90">{dateText}</p>
+      <p className="text-[16px] font-medium italic tracking-wide text-white/90">{dailyMessage}</p>
     </div>
   );
 };

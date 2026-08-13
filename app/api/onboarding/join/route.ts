@@ -62,7 +62,7 @@ export async function POST(request: Request) {
           companyId: company.id,
           email,
           name,
-          role: 'EMPLOYEE',
+          role: 'EMPLOYEE_PR',
           employeeId,
           status: 'active',
         },
@@ -91,7 +91,7 @@ export async function POST(request: Request) {
       companyId: company.id,
       companyName: company.name,
       employeeId,
-      role: 'EMPLOYEE',
+      role: 'EMPLOYEE_PR',
     });
   } catch (error) {
     if (error instanceof AuthError) {

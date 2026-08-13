@@ -1,15 +1,54 @@
-export type AppRole = 'EMPLOYEE' | 'MANAGER' | 'HR' | 'FINANCE' | 'ADMIN' | 'CEO';
+export type AppRole =
+  | 'EMPLOYEE_PR'
+  | 'EMPLOYEE_CONT'
+  | 'MANAGER'
+  | 'HR'
+  | 'FINANCE'
+  | 'ADMIN'
+  | 'CEO';
 
-export const APP_ROLES: AppRole[] = ['EMPLOYEE', 'MANAGER', 'HR', 'FINANCE', 'ADMIN', 'CEO'];
+export const APP_ROLES: AppRole[] = [
+  'EMPLOYEE_PR',
+  'EMPLOYEE_CONT',
+  'MANAGER',
+  'HR',
+  'FINANCE',
+  'ADMIN',
+  'CEO',
+];
+
+export const EMPLOYEE_ROLES: AppRole[] = ['EMPLOYEE_PR', 'EMPLOYEE_CONT'];
+
+export const ROLE_LABELS: Record<AppRole, string> = {
+  EMPLOYEE_PR: 'Employee-PR',
+  EMPLOYEE_CONT: 'Employee-CONT',
+  MANAGER: 'Manager',
+  HR: 'HR',
+  FINANCE: 'Finance',
+  ADMIN: 'Admin',
+  CEO: 'CEO',
+};
+
+export function isEmployeeRole(role: string | null | undefined): boolean {
+  const value = (role ?? '').toUpperCase().replace(/-/g, '_');
+  return value === 'EMPLOYEE_PR' || value === 'EMPLOYEE_CONT' || value === 'EMPLOYEE';
+}
 
 export function normalizeAppRole(role: string | undefined | null): AppRole {
-  const value = (role ?? '').toUpperCase();
+  const value = (role ?? '').toUpperCase().replace(/-/g, '_');
+  if (value === 'EMPLOYEE_PR' || value === 'EMPLOYEE') return 'EMPLOYEE_PR';
+  if (value === 'EMPLOYEE_CONT') return 'EMPLOYEE_CONT';
   if (value === 'MANAGER') return 'MANAGER';
   if (value === 'HR') return 'HR';
   if (value === 'FINANCE') return 'FINANCE';
   if (value === 'ADMIN') return 'ADMIN';
   if (value === 'CEO') return 'CEO';
-  return 'EMPLOYEE';
+  return 'EMPLOYEE_PR';
+}
+
+export function getRoleLabel(role: string | null | undefined) {
+  const normalized = normalizeAppRole(role);
+  return ROLE_LABELS[normalized];
 }
 
 export interface JwtUserPayload {
@@ -73,7 +112,8 @@ export function isAuthorizedForRole(role: string | null | undefined, allowedRole
     return false;
   }
 
-  return allowedRoles.includes(role.toUpperCase() as AppRole);
+  const normalized = normalizeAppRole(role);
+  return allowedRoles.includes(normalized);
 }
 
 export function setAuthCookie(token: string) {

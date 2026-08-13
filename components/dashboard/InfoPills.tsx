@@ -23,24 +23,24 @@ const InfoPills: FC<InfoPillsProps> = ({ lastLogin }) => {
   const last = lastLogin ?? 'Today, 09:18 AM';
 
   return (
-    <div className="flex flex-wrap gap-3">
-      <div className="bg-white/15 backdrop-blur rounded-full px-4 h-11 flex items-center gap-3">
-        <div className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-white/10">
-          <Clock className="w-4 h-4 text-white" />
+    <div className="flex flex-wrap items-center justify-center gap-3 lg:justify-start">
+      <div className="flex h-11 items-center gap-3 rounded-full bg-white/15 px-4 backdrop-blur">
+        <div className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/10">
+          <Clock className="h-4 w-4 text-white" />
         </div>
-        <div className="text-white">
-          <div className="text-xs text-white/90">Current Time</div>
-          <div className="font-semibold">{currentTime}</div>
+        <div className="leading-tight text-white">
+          <div className="text-[11px] text-white/80">Current Time</div>
+          <div className="text-sm font-semibold">{currentTime}</div>
         </div>
       </div>
 
-      <div className="bg-white/15 backdrop-blur rounded-full px-4 h-11 flex items-center gap-3">
-        <div className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-white/10">
-          <Repeat className="w-4 h-4 text-white" />
+      <div className="flex h-11 items-center gap-3 rounded-full bg-white/15 px-4 backdrop-blur">
+        <div className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/10">
+          <Repeat className="h-4 w-4 text-white" />
         </div>
-        <div className="text-white">
-          <div className="text-xs text-white/90">Last Login</div>
-          <div className="font-semibold">{last}</div>
+        <div className="leading-tight text-white">
+          <div className="text-[11px] text-white/80">Last Login</div>
+          <div className="text-sm font-semibold">{last}</div>
         </div>
       </div>
     </div>
