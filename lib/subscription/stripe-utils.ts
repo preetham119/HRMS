@@ -1,9 +1,16 @@
 import Stripe from 'stripe';
 import { stripeConfig } from './stripe-config';
 
-export const stripe = new Stripe(stripeConfig.secretKey, {
-  apiVersion: '2025-02-24.acacia',
-});
+let stripeClient: Stripe | null = null;
+
+function getStripe(): Stripe {
+  if (!stripeClient) {
+    stripeClient = new Stripe(stripeConfig.secretKey, {
+      apiVersion: '2025-02-24.acacia',
+    });
+  }
+  return stripeClient;
+}
 
 /**
  * Create a Stripe checkout session for subscription
@@ -42,14 +49,14 @@ export async function createCheckoutSession(params: {
     sessionParams.customer = params.customerId;
   }
 
-  return await stripe.checkout.sessions.create(sessionParams);
+  return await getStripe().checkout.sessions.create(sessionParams);
 }
 
 /**
  * Retrieve a checkout session
  */
 export async function retrieveCheckoutSession(sessionId: string) {
-  return await stripe.checkout.sessions.retrieve(sessionId, {
+  return await getStripe().checkout.sessions.retrieve(sessionId, {
     expand: ['subscription'],
   });
 }
@@ -59,24 +66,24 @@ export async function retrieveCheckoutSession(sessionId: string) {
  */
 export async function getOrCreateCustomer(email: string, customerId?: string) {
   if (customerId) {
-    return await stripe.customers.retrieve(customerId);
+    return await getStripe().customers.retrieve(customerId);
   }
 
   // Search for existing customer
-  const customers = await stripe.customers.list({ email, limit: 1 });
+  const customers = await getStripe().customers.list({ email, limit: 1 });
   if (customers.data.length > 0) {
     return customers.data[0];
   }
 
   // Create new customer
-  return await stripe.customers.create({ email });
+  return await getStripe().customers.create({ email });
 }
 
 /**
  * Get subscription details
  */
 export async function getSubscription(subscriptionId: string) {
-  return await stripe.subscriptions.retrieve(subscriptionId);
+  return await getStripe().subscriptions.retrieve(subscriptionId);
 }
 
 /**
@@ -84,11 +91,11 @@ export async function getSubscription(subscriptionId: string) {
  */
 export async function cancelSubscription(subscriptionId: string, atPeriodEnd: boolean = true) {
   if (atPeriodEnd) {
-    return await stripe.subscriptions.update(subscriptionId, {
+    return await getStripe().subscriptions.update(subscriptionId, {
       cancel_at_period_end: true,
     });
   }
-  return await stripe.subscriptions.cancel(subscriptionId);
+  return await getStripe().subscriptions.cancel(subscriptionId);
 }
 
 /**
@@ -96,7 +103,7 @@ export async function cancelSubscription(subscriptionId: string, atPeriodEnd: bo
  */
 export function verifyWebhookSignature(body: string, signature: string): object {
   try {
-    return stripe.webhooks.constructEvent(body, signature, stripeConfig.webhookSecret);
+    return getStripe().webhooks.constructEvent(body, signature, stripeConfig.webhookSecret);
   } catch (error) {
     throw new Error(`Webhook signature verification failed: ${error}`);
   }
@@ -106,14 +113,14 @@ export function verifyWebhookSignature(body: string, signature: string): object 
  * Get invoice
  */
 export async function getInvoice(invoiceId: string) {
-  return await stripe.invoices.retrieve(invoiceId);
+  return await getStripe().invoices.retrieve(invoiceId);
 }
 
 /**
  * List invoices for a subscription
  */
 export async function listSubscriptionInvoices(subscriptionId: string) {
-  return await stripe.invoices.list({
+  return await getStripe().invoices.list({
     subscription: subscriptionId,
     limit: 100,
   });
@@ -123,12 +130,12 @@ export async function listSubscriptionInvoices(subscriptionId: string) {
  * Get product details
  */
 export async function getProduct(productId: string) {
-  return await stripe.products.retrieve(productId);
+  return await getStripe().products.retrieve(productId);
 }
 
 /**
  * Get price details
  */
 export async function getPrice(priceId: string) {
-  return await stripe.prices.retrieve(priceId);
+  return await getStripe().prices.retrieve(priceId);
 }
