@@ -1,47 +1,58 @@
-const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
-const stripePublishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
-const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-const priceId = process.env.NEXT_PUBLIC_STRIPE_PRICE_ID;
-const successUrl = process.env.NEXT_PUBLIC_STRIPE_SUCCESS_URL || `${process.env.NEXT_PUBLIC_APP_URL}/subscription?status=success`;
-const cancelUrl = process.env.NEXT_PUBLIC_STRIPE_CANCEL_URL || `${process.env.NEXT_PUBLIC_APP_URL}/subscription?status=canceled`;
-
-if (!stripeSecretKey) {
-  throw new Error('STRIPE_SECRET_KEY is not configured');
+function requireEnv(name: string): string {
+  const value = process.env[name];
+  if (!value) {
+    throw new Error(`${name} is not configured`);
+  }
+  return value;
 }
 
-if (!stripePublishableKey) {
-  throw new Error('NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY is not configured');
+function resolveAppUrl(): string {
+  return (
+    process.env.NEXT_PUBLIC_STRIPE_SUCCESS_URL ||
+    `${process.env.NEXT_PUBLIC_APP_URL || ''}/subscription?status=success`
+  );
 }
 
-if (!webhookSecret) {
-  throw new Error('STRIPE_WEBHOOK_SECRET is not configured');
-}
-
-if (!priceId) {
-  throw new Error('NEXT_PUBLIC_STRIPE_PRICE_ID is not configured');
+function resolveCancelUrl(): string {
+  return (
+    process.env.NEXT_PUBLIC_STRIPE_CANCEL_URL ||
+    `${process.env.NEXT_PUBLIC_APP_URL || ''}/subscription?status=canceled`
+  );
 }
 
 export const stripeConfig = {
-  secretKey: stripeSecretKey,
-  publishableKey: stripePublishableKey,
-  webhookSecret,
-  priceId,
-  successUrl,
-  cancelUrl,
+  get secretKey() {
+    return requireEnv('STRIPE_SECRET_KEY');
+  },
+  get publishableKey() {
+    return requireEnv('NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY');
+  },
+  get webhookSecret() {
+    return requireEnv('STRIPE_WEBHOOK_SECRET');
+  },
+  get priceId() {
+    return requireEnv('NEXT_PUBLIC_STRIPE_PRICE_ID');
+  },
+  get successUrl() {
+    return resolveAppUrl();
+  },
+  get cancelUrl() {
+    return resolveCancelUrl();
+  },
 };
 
 export function getStripePublicKey(): string {
-  return stripePublishableKey;
+  return stripeConfig.publishableKey;
 }
 
 export function getStripeSuccessUrl(): string {
-  return successUrl;
+  return stripeConfig.successUrl;
 }
 
 export function getStripeCancelUrl(): string {
-  return cancelUrl;
+  return stripeConfig.cancelUrl;
 }
 
 export function getStripePriceId(): string {
-  return priceId;
+  return stripeConfig.priceId;
 }

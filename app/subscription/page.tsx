@@ -17,6 +17,7 @@ interface Invoice {
   dueDate?: string;
   paidDate?: string;
   pdfUrl?: string;
+  createdAt?: string;
 }
 
 const statusColors: Record<string, { bg: string; text: string; badge: string }> = {
@@ -211,7 +212,7 @@ export default function SubscriptionPage() {
                   ? `Free Trial - ${subscription.daysRemaining} Days Remaining`
                   : subscription?.isExpired
                     ? 'Free Trial Expired'
-                    : subscription?.subscription?.plan?.name || 'Premium Plan'}
+                    : subscription?.plan?.name || 'Premium Plan'}
               </h2>
 
               <p className={`mt-2 text-base ${colors.text} opacity-80`}>
@@ -268,14 +269,14 @@ export default function SubscriptionPage() {
               <div className="flex items-start justify-between">
                 <span className="text-sm text-slate-600 dark:text-slate-400">Plan</span>
                 <span className="font-semibold text-slate-900 dark:text-white">
-                  {subscription?.subscription?.plan?.name || 'Free Trial'}
+                  {subscription?.plan?.name || 'Free Trial'}
                 </span>
               </div>
               <div className="flex items-start justify-between">
                 <span className="text-sm text-slate-600 dark:text-slate-400">Price</span>
                 <span className="font-semibold text-slate-900 dark:text-white">
-                  {subscription?.subscription?.plan
-                    ? `₹${(subscription.subscription.plan.amount / 100).toFixed(2)} / ${subscription.subscription.plan.billingPeriod}`
+                  {subscription?.plan
+                    ? `₹${(subscription.plan.amount / 100).toFixed(2)} / ${subscription.plan.billingPeriod}`
                     : 'Free'}
                 </span>
               </div>
@@ -315,13 +316,13 @@ export default function SubscriptionPage() {
           >
             <h3 className="mb-6 text-lg font-semibold text-slate-900 dark:text-white">Included Features</h3>
             <div className="space-y-3">
-              {(subscription?.subscription?.plan?.features || [
+              {(subscription?.plan?.features || [
                 'Employee Management',
                 'Leave & Attendance Tracking',
                 'Payroll Management',
                 'Performance Reviews',
                 'Document Management',
-              ]).map((feature, i) => (
+              ]).map((feature: string, i: number) => (
                 <div key={i} className="flex items-start gap-3">
                   <Check className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
                   <span className="text-sm text-slate-700 dark:text-slate-300">{feature}</span>

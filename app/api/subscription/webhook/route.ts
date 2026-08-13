@@ -118,11 +118,11 @@ export async function POST(request: Request) {
             invoice.amount_paid || 0,
             invoice.currency,
             'paid',
-            invoice.period_start,
-            invoice.period_end,
-            invoice.due_date,
-            invoice.status_transitions?.paid_at,
-            invoice.pdf,
+            invoice.period_start ?? undefined,
+            invoice.period_end ?? undefined,
+            invoice.due_date ?? undefined,
+            invoice.status_transitions?.paid_at ?? undefined,
+            invoice.invoice_pdf ?? undefined,
           );
         }
       }
@@ -144,11 +144,11 @@ export async function POST(request: Request) {
             invoice.amount_due || 0,
             invoice.currency,
             'failed',
-            invoice.period_start,
-            invoice.period_end,
-            invoice.due_date,
+            invoice.period_start ?? undefined,
+            invoice.period_end ?? undefined,
+            invoice.due_date ?? undefined,
             undefined,
-            invoice.pdf,
+            invoice.invoice_pdf ?? undefined,
           );
 
           // Mark subscription as past due

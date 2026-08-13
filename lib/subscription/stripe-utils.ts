@@ -2,7 +2,7 @@ import Stripe from 'stripe';
 import { stripeConfig } from './stripe-config';
 
 export const stripe = new Stripe(stripeConfig.secretKey, {
-  apiVersion: '2024-06-20',
+  apiVersion: '2025-02-24.acacia',
 });
 
 /**
@@ -88,7 +88,7 @@ export async function cancelSubscription(subscriptionId: string, atPeriodEnd: bo
       cancel_at_period_end: true,
     });
   }
-  return await stripe.subscriptions.del(subscriptionId);
+  return await stripe.subscriptions.cancel(subscriptionId);
 }
 
 /**
